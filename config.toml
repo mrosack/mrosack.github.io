@@ -1,0 +1,9 @@
+baseURL = 'https://www.rosacksoftwaresolutions.com/'
+languageCode = 'en-us'
+title = 'Rosack Software Solutions'
+theme = 'terminal'
+
+[params]
+    themeColor = 'blue'
+
+    fullWidthTheme = true
