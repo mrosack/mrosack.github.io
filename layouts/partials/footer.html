@@ -1,0 +1,36 @@
+<div class="post" style="display: grid;grid-template-columns: repeat(auto-fit, minmax(384px, 1fr));grid-gap: 1rem;">
+    <div>
+        <h1 class="post-title">Social Links</h1>
+        <div style="display: flex; justify-content: space-around;">
+            <a href="https://twitter.com/mike_rosack/" target="_blank"><img alt="mike_rosack on twitter" src="/img/twitter.png"></a>
+            <a href="https://www.linkedin.com/in/mrosack/" target="_blank"><img alt="mrosack on linked in" src="/img/linkedin.png"></a>
+            <a href="https://github.com/mrosack/" target="_blank"><img alt="mrosack on github" src="/img/github.png"></a>
+        </div>
+        <p style="text-align: center;font-size: 9px;margin-bottom: 50px;">Icons from <a target="_blank" href="https://icons8.com">icons8.com</a></p>
+        <h1 class="post-title">Email Us!</h1>
+        <p style="margin-bottom: 50px;">We'd love to hear from you! <a href="mailto:mike@rosacksoftwaresolutions.com">mike@rosacksoftwaresolutions.com</a></p>
+    </div>
+    <div>
+        <h1 class="post-title"><a href="https://twitter.com/mike_rosack">Follow me on Twitter</a></h1>
+        <a class="twitter-timeline" data-height="500" data-theme="dark" href="https://twitter.com/mike_rosack?ref_src=twsrc%5Etfw">Tweets by mike_rosack</a> <script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
+    </div>
+</div>
+<footer class="footer">
+    <div class="footer__inner">
+        <div class="copyright">
+          <span>© {{ now.Year }} <a href="mailto:mike@rosacksoftwaresolutions.com">Rosack Software Solutions, LLC</a></span>
+          <span>:: Powered by <a href="http://gohugo.io">Hugo</a>&nbsp;</span>
+          <span>:: Theme made by <a href="https://twitter.com/panr">panr</a></span>
+        </div>
+    </div>
+  </footer>
+  
+  <script src="{{ "assets/main.js" | absURL }}"></script>
+  <script src="{{ "assets/prism.js" | absURL }}"></script>
+  
+  {{ if $.Site.Params.showLanguageSelector }}
+    <script src="{{ "assets/languageSelector.js" | absURL }}"></script>
+  {{ end }}
+  
+  <!-- Extended footer section-->
+  {{ partial "extended_footer.html" . }}

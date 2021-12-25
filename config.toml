@@ -5,5 +5,22 @@ theme = 'terminal'
 
 [params]
     themeColor = 'blue'
+    centerTheme = true
+    showMenuItems = 5
 
-    fullWidthTheme = true
+[menu]
+[[menu.main]]
+    identifier = 'portfolio'
+    name = 'Portfolio'
+    url = '/portfolio'
+    weight = 1
+[[menu.main]]
+    identifier = 'blog'
+    name = 'Blog'
+    url = '/posts'
+    weight = 2
+[[menu.main]]
+    identifier = 'about'
+    name = 'About Mike'
+    url = '/about'
+    weight = 3
