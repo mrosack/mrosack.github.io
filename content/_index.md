@@ -1,6 +1,5 @@
 ---
 title: "Home"
-date: 2021-12-25T20:19:35Z
 ---
 
 # Rosack Software Solutions, LLC {.home-header}

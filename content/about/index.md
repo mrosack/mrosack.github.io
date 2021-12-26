@@ -1,8 +1,8 @@
 ---
 title: "About"
-date: 2021-12-25T12:19:35Z
-draft: true
 ---
+
+{{< image src="/img/mike.jpg" alt="Mike" position="right" style="width: 200px; margin-left: 10px; float:right; border-radius: 8px;" >}}
 
 Mike Rosack has loved computers and technology his entire life, and getting into software development was a pretty easy career choice.  He grew up in Florida, went to school at Georgia Tech (go Jackets!), and has lived in Wisconsin for well over a decade now.
 

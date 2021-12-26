@@ -11,3 +11,8 @@
 .headings--one-size h1 {
     margin-top: 0px !important;
 }
+
+.disclaimer {
+    font-weight: bold;
+    color: #F00;
+}
