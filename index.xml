@@ -1,13 +1,14 @@
 <?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Home on Rosack Software Solutions</title><link>/</link><description>Recent content in Home on Rosack Software Solutions</description><generator>Hugo -- gohugo.io</generator><language>en-us</language><lastBuildDate>Sat, 25 Dec 2021 12:07:32 +0000</lastBuildDate><atom:link href="/index.xml" rel="self" type="application/rss+xml"/><item><title>Developing a Hugo Site on Windows with Docker</title><link>/posts/hugo-windows-docker/</link><pubDate>Sat, 25 Dec 2021 12:07:32 +0000</pubDate><guid>/posts/hugo-windows-docker/</guid><description>I&amp;rsquo;ve been wanting to retire the Wordpress site I threw up 4 years ago when I went independent pretty much from the moment I published it. About a year and a half ago I finally got serious and started working on a replacement using https://www.11ty.dev/, but I&amp;rsquo;m just not enough of a CSS guru to make something look great from scratch. This Christmas break I decided to give it another go and took a look at https://gohugo.</description><content>&lt;p>I&amp;rsquo;ve been wanting to retire the Wordpress site I threw up 4 years ago when I went independent pretty much from the moment I published it. About a year and a half ago I finally got serious and started working on a replacement using &lt;a href="Eleventy">https://www.11ty.dev/&lt;/a>, but I&amp;rsquo;m just not enough of a CSS guru to make something look great from scratch. This Christmas break I decided to give it another go and took a look at &lt;a href="Hugo">https://gohugo.io/&lt;/a>, which I had originally dismissed because I wanted something javascripty, but then I started using it and got from 0 to a pretty nice site in just a day or two.&lt;/p>
 &lt;p>That said, there were a couple hangups I had to get over, mostly because I&amp;rsquo;m a stubborn Windows user from my days working with .NET. I didn&amp;rsquo;t want to install the Hugo binary locally, and there&amp;rsquo;s a nice &lt;a href="https://hub.docker.com/r/klakegg/hugo/">Hugo docker image&lt;/a>, so I wanted to set up a dev env to run Hugo from docker. That seems easy, but it never is on Windows. Here&amp;rsquo;s the final script I ended up with, but we&amp;rsquo;ll talk through some issues I had:&lt;/p>
 &lt;div class="collapsable-code">
-&lt;input id="965134728" type="checkbox" />
-&lt;label for="965134728">
+&lt;input id="958217364" type="checkbox" />
+&lt;label for="958217364">
 &lt;span class="collapsable-code__language">javascript&lt;/span>
 &lt;span class="collapsable-code__toggle" data-label-expand="△" data-label-collapse="▽">&lt;/span>
 &lt;/label>
 &lt;pre class="language-javascript" >&lt;code>
 #!/bin/bash
+HUGO_VERSION=0.91.2
 platform=&amp;#34;unix&amp;#34;
 if [ &amp;#34;$OSTYPE&amp;#34; = &amp;#34;msys&amp;#34; ] || [ &amp;#34;$OSTYPE&amp;#34; = &amp;#34;cygwin&amp;#34; ]; then
 platform=&amp;#34;windows&amp;#34;
@@ -21,9 +22,9 @@ params=&amp;#34;$params $i&amp;#34;
 fi
 done
 if [ $platform = &amp;#34;windows&amp;#34; ]; then
-winpty bash -c &amp;#34;MSYS_NO_PATHCONV=1 docker run --rm -it -v $(pwd):/src -p 1313:1313 klakegg/hugo:0.91.2 $params&amp;#34;
+winpty bash -c &amp;#34;MSYS_NO_PATHCONV=1 docker run --rm -it -v $(pwd):/src -p 1313:1313 klakegg/hugo:$HUGO_VERSION $params&amp;#34;
 else
-docker run --rm -it -v $(pwd):/src -p 1313:1313 klakegg/hugo:0.91.2 $params
+docker run --rm -it -v $(pwd):/src -p 1313:1313 klakegg/hugo:$HUGO_VERSION $params
 fi
 &lt;/code>&lt;/pre>
 &lt;/div>
@@ -38,11 +39,7 @@ fi
 &lt;p>&lt;strong>File watching broken:&lt;/strong> On the computer I was developing on I had WSL 1, not 2, but I think this issue would be present on WSL 2 if you&amp;rsquo;re developing on the Windows file system and not the Linux image - because the data is shared over a file share checking for file updates doesn&amp;rsquo;t work. Hugo has a workaround for this with the &lt;code>--poll&lt;/code> option, so I added a special case to check if we&amp;rsquo;re running the server and add the poll command automatically on windows.&lt;/p>
 &lt;/li>
 &lt;/ul>
-&lt;p>After all this, I could run the standard Hugo command line stuff like:&lt;/p>
-&lt;ul>
-&lt;li>&lt;code>./hugo-docker.sh server&lt;/code>&lt;/li>
-&lt;li>&lt;code>./hugo-docker.sh new posts/hugo-windows-docker.md&lt;/code>&lt;/li>
-&lt;/ul></content></item><item><title>Real Time Serverless Notifications with AWS IoT</title><link>/posts/serverless-notifications-aws-iot/</link><pubDate>Sat, 26 Aug 2017 11:11:13 +0000</pubDate><guid>/posts/serverless-notifications-aws-iot/</guid><description>A big downside of current &amp;ldquo;Serverless&amp;rdquo; architectures is, well, you don&amp;rsquo;t have a server! Because of this, some things that we take for granted in web applications today are hard to do in a Serverless model - take real time notifications for example. Usually you&amp;rsquo;d use SignalR, Socket.IO, or some other framework to help you set up and use websocket connections, but those frameworks require a long-lived connection to a server.</description><content>&lt;p>A big downside of current &amp;ldquo;Serverless&amp;rdquo; architectures is, well, you don&amp;rsquo;t have a server! Because of this, some things that we take for granted in web applications today are hard to do in a Serverless model - take real time notifications for example. Usually you&amp;rsquo;d use &lt;a href="https://www.asp.net/signalr">SignalR&lt;/a>, &lt;a href="https://socket.io/">Socket.IO&lt;/a>, or some other framework to help you set up and use websocket connections, but those frameworks require a long-lived connection to a server. You could use a technique like long polling in the serverless model, but serverless options charge by the second, and every second you&amp;rsquo;ve got the connection open doing nothing you&amp;rsquo;re being charged for it. So what to do?&lt;/p>
+&lt;p>After all this, I could run the standard Hugo command line stuff like &lt;code>./hugo-docker.sh server&lt;/code> and &lt;code>./hugo-docker.sh new posts/hugo-windows-docker.md&lt;/code>, and I could also include the script in my github actions workflow to build and deploy the site. Check out the full repo here if you&amp;rsquo;re interested: &lt;a href="https://github.com/mrosack/mrosack.github.io">https://github.com/mrosack/mrosack.github.io&lt;/a>&lt;/p></content></item><item><title>Real Time Serverless Notifications with AWS IoT</title><link>/posts/serverless-notifications-aws-iot/</link><pubDate>Sat, 26 Aug 2017 11:11:13 +0000</pubDate><guid>/posts/serverless-notifications-aws-iot/</guid><description>A big downside of current &amp;ldquo;Serverless&amp;rdquo; architectures is, well, you don&amp;rsquo;t have a server! Because of this, some things that we take for granted in web applications today are hard to do in a Serverless model - take real time notifications for example. Usually you&amp;rsquo;d use SignalR, Socket.IO, or some other framework to help you set up and use websocket connections, but those frameworks require a long-lived connection to a server.</description><content>&lt;p>A big downside of current &amp;ldquo;Serverless&amp;rdquo; architectures is, well, you don&amp;rsquo;t have a server! Because of this, some things that we take for granted in web applications today are hard to do in a Serverless model - take real time notifications for example. Usually you&amp;rsquo;d use &lt;a href="https://www.asp.net/signalr">SignalR&lt;/a>, &lt;a href="https://socket.io/">Socket.IO&lt;/a>, or some other framework to help you set up and use websocket connections, but those frameworks require a long-lived connection to a server. You could use a technique like long polling in the serverless model, but serverless options charge by the second, and every second you&amp;rsquo;ve got the connection open doing nothing you&amp;rsquo;re being charged for it. So what to do?&lt;/p>
 &lt;p>I had this dilemma with &lt;a href="https://www.playyourdamnturn.com/">PYDT&amp;rsquo;s&lt;/a> desktop client - it needs to know when a new turn is available for the user to play, but the only way to check for updated turns in a standard serverless model is dumb polling. Unfortunately, the cost of AWS API Gateway (which serves your requests for Lambda) is $4/million requests, so that was going to be way too expensive if we polled once a minute (46K requests a month per user, assuming a user&amp;rsquo;s PC is always on). What I originally ended up doing was caching game state to S3, and polling S3 instead of the API, which is an order of magnitude cheaper (that same $4 gets you about 10 million requests in S3).&lt;/p>
 &lt;p>That worked fine, but it was hacky, and obviously websockets/push notifications were made for scenarios like this. So what do we do?&lt;/p>
 &lt;p>&lt;a href="https://aws.amazon.com/iot">AWS IoT&lt;/a> to the rescue! While it&amp;rsquo;s not really designed for this purpose, it exposes an &lt;a href="http://mqtt.org/">MQTT&lt;/a> server that you can use to talk to &amp;ldquo;devices&amp;rdquo; out on the internet, but for our purposes our devices are just going to be normal web browsers. Let&amp;rsquo;s walk through the code I used to get this set up&amp;hellip;&lt;/p>
@@ -53,8 +50,8 @@ fi
 &lt;h2 id="client-side">Client Side&lt;/h2>
 &lt;p>On the client, we&amp;rsquo;re using &lt;a href="https://github.com/aws/aws-iot-device-sdk-js">aws-iot-device-sdk-js&lt;/a>, a library that wraps an MQTT client and adds additional AWS IoT-specific functionality. It&amp;rsquo;s not too hard to set things up, here&amp;rsquo;s all the code it takes (&lt;a href="https://github.com/aws/aws-iot-device-sdk-js">starting at line 114 here&lt;/a>):&lt;/p>
 &lt;div class="collapsable-code">
-&lt;input id="356219487" type="checkbox" />
-&lt;label for="356219487">
+&lt;input id="419275836" type="checkbox" />
+&lt;label for="419275836">
 &lt;span class="collapsable-code__language">javascript&lt;/span>
 &lt;span class="collapsable-code__toggle" data-label-expand="△" data-label-collapse="▽">&lt;/span>
 &lt;/label>
@@ -98,8 +95,8 @@ this.loadGames();
 &lt;h2 id="server-side">Server Side&lt;/h2>
 &lt;p>The server side is even easier, believe it or not. We just use the IotData class in the aws-sdk (&lt;a href="https://github.com/pydt/api/blob/00a352b0b845b8ce097290142d122458c5046817/functions/sns/userTurnNotification.js">see the userTurnNotification handler in the API&lt;/a>):&lt;/p>
 &lt;div class="collapsable-code">
-&lt;input id="947651823" type="checkbox" />
-&lt;label for="947651823">
+&lt;input id="568374219" type="checkbox" />
+&lt;label for="568374219">
 &lt;span class="collapsable-code__language">javascript&lt;/span>
 &lt;span class="collapsable-code__toggle" data-label-expand="△" data-label-collapse="▽">&lt;/span>
 &lt;/label>

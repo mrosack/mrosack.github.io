@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>pydt on Rosack Software Solutions</title><link>/tags/pydt/</link><description>Recent content in pydt on Rosack Software Solutions</description><generator>Hugo -- gohugo.io</generator><language>en-us</language><lastBuildDate>Sat, 26 Aug 2017 11:11:13 +0000</lastBuildDate><atom:link href="/tags/pydt/index.xml" rel="self" type="application/rss+xml"/><item><title>Real Time Serverless Notifications with AWS IoT</title><link>/posts/serverless-notifications-aws-iot/</link><pubDate>Sat, 26 Aug 2017 11:11:13 +0000</pubDate><guid>/posts/serverless-notifications-aws-iot/</guid><description>A big downside of current &amp;ldquo;Serverless&amp;rdquo; architectures is, well, you don&amp;rsquo;t have a server! Because of this, some things that we take for granted in web applications today are hard to do in a Serverless model - take real time notifications for example. Usually you&amp;rsquo;d use SignalR, Socket.IO, or some other framework to help you set up and use websocket connections, but those frameworks require a long-lived connection to a server.</description><content>&lt;p>A big downside of current &amp;ldquo;Serverless&amp;rdquo; architectures is, well, you don&amp;rsquo;t have a server! Because of this, some things that we take for granted in web applications today are hard to do in a Serverless model - take real time notifications for example. Usually you&amp;rsquo;d use &lt;a href="https://www.asp.net/signalr">SignalR&lt;/a>, &lt;a href="https://socket.io/">Socket.IO&lt;/a>, or some other framework to help you set up and use websocket connections, but those frameworks require a long-lived connection to a server. You could use a technique like long polling in the serverless model, but serverless options charge by the second, and every second you&amp;rsquo;ve got the connection open doing nothing you&amp;rsquo;re being charged for it. So what to do?&lt;/p>
+&lt;p>I had this dilemma with &lt;a href="https://www.playyourdamnturn.com/">PYDT&amp;rsquo;s&lt;/a> desktop client - it needs to know when a new turn is available for the user to play, but the only way to check for updated turns in a standard serverless model is dumb polling. Unfortunately, the cost of AWS API Gateway (which serves your requests for Lambda) is $4/million requests, so that was going to be way too expensive if we polled once a minute (46K requests a month per user, assuming a user&amp;rsquo;s PC is always on). What I originally ended up doing was caching game state to S3, and polling S3 instead of the API, which is an order of magnitude cheaper (that same $4 gets you about 10 million requests in S3).&lt;/p>
+&lt;p>That worked fine, but it was hacky, and obviously websockets/push notifications were made for scenarios like this. So what do we do?&lt;/p>
+&lt;p>&lt;a href="https://aws.amazon.com/iot">AWS IoT&lt;/a> to the rescue! While it&amp;rsquo;s not really designed for this purpose, it exposes an &lt;a href="http://mqtt.org/">MQTT&lt;/a> server that you can use to talk to &amp;ldquo;devices&amp;rdquo; out on the internet, but for our purposes our devices are just going to be normal web browsers. Let&amp;rsquo;s walk through the code I used to get this set up&amp;hellip;&lt;/p>
+&lt;span class="disclaimer">
+&lt;p>DISCLAIMER: The PYDT use case is very simple - no security is required, because no one will care if the messages we&amp;rsquo;re sending (&amp;ldquo;it&amp;rsquo;s your turn&amp;rdquo;) are intercepted by a user that wasn&amp;rsquo;t the intended receiver. Adding security complicates this scenario a lot, but this is a good example of what&amp;rsquo;s possible!&lt;/p>
+&lt;/span>
+&lt;p>At it&amp;rsquo;s most basic level, AWS IoT exposes an MQTT endpoint that you can use for pub/sub of messages. There&amp;rsquo;s a lot of other cool functionality in there, but for our purposes that&amp;rsquo;s all we care about. We want each user to only get messages when there&amp;rsquo;s a new turn in one of their games, but nobody else&amp;rsquo;s, so each user will need their own topic to subscribe to. In PYDT, that looks like &lt;strong>/pydt/ENVIRONMENT/user/STEAM_ID/gameupdate&lt;/strong>, where ENVIRONMENT is dev or prod, and STEAM_ID is, well, the user&amp;rsquo;s Steam ID.&lt;/p>
+&lt;h2 id="client-side">Client Side&lt;/h2>
+&lt;p>On the client, we&amp;rsquo;re using &lt;a href="https://github.com/aws/aws-iot-device-sdk-js">aws-iot-device-sdk-js&lt;/a>, a library that wraps an MQTT client and adds additional AWS IoT-specific functionality. It&amp;rsquo;s not too hard to set things up, here&amp;rsquo;s all the code it takes (&lt;a href="https://github.com/aws/aws-iot-device-sdk-js">starting at line 114 here&lt;/a>):&lt;/p>
+&lt;div class="collapsable-code">
+&lt;input id="419275836" type="checkbox" />
+&lt;label for="419275836">
+&lt;span class="collapsable-code__language">javascript&lt;/span>
+&lt;span class="collapsable-code__toggle" data-label-expand="△" data-label-collapse="▽">&lt;/span>
+&lt;/label>
+&lt;pre class="language-javascript" >&lt;code>
+configureIot() {
+const env = PYDT_CONFIG.PROD ? &amp;#39;prod&amp;#39; : &amp;#39;dev&amp;#39;;
+const topic = `/pydt/${env}/user/${this.profile.steamid}/gameupdate`;
+this.iotDevice = awsIot.device({
+region: &amp;#39;us-east-1&amp;#39;,
+protocol: &amp;#39;wss&amp;#39;,
+keepalive: 600,
+accessKeyId: PYDT_CONFIG.IOT_CLIENT_ACCESS_KEY,
+secretKey: PYDT_CONFIG.IOT_CLIENT_SECRET_KEY,
+host: &amp;#39;a21s639tnrshxf.iot.us-east-1.amazonaws.com&amp;#39;
+});
+this.iotDevice.on(&amp;#39;connect&amp;#39;, () =&amp;gt; {
+this.iotDevice.subscribe(topic);
+});
+this.iotDevice.on(&amp;#39;error&amp;#39;, err =&amp;gt; {
+console.log(&amp;#39;IoT error...&amp;#39;, err);
+});
+this.iotDevice.on(&amp;#39;message&amp;#39;, (recTopic, message) =&amp;gt; {
+console.log(&amp;#39;received message from topic &amp;#39;, recTopic);
+if (recTopic === topic) {
+this.loadGames();
+}
+});
+}
+&lt;/code>&lt;/pre>
+&lt;/div>
+&lt;p>A couple things to note here:&lt;/p>
+&lt;ul>
+&lt;li>
+&lt;p>We set the keepalive to 600 seconds. By default, I think the keepalive is 60, which means the client will ping the server once a minute to make sure the connection is open. AWS doesn&amp;rsquo;t make a big deal out of this in their documentation, but &lt;strong>YOU GET CHARGED FOR EVERY PING&lt;/strong>, and at $5/million messages that&amp;rsquo;s even worse than our dumb polling pricing! On a desktop computer, the connection should be fairly stable anyway, so only pinging once every 10 minutes isn&amp;rsquo;t that big of a deal (and I might even make that higher someday).&lt;/p>
+&lt;/li>
+&lt;li>
+&lt;p>The access and secret keys are set up to only have permissions to subscribe to a topic and receive messages, so a malicious user wouldn&amp;rsquo;t be able to take those keys and publish messages to everyone.&lt;/p>
+&lt;/li>
+&lt;/ul>
+&lt;p>Easy, huh? That&amp;rsquo;s all it takes, and every time the server sends us a message we&amp;rsquo;ll receive it in the message callback!&lt;/p>
+&lt;h2 id="server-side">Server Side&lt;/h2>
+&lt;p>The server side is even easier, believe it or not. We just use the IotData class in the aws-sdk (&lt;a href="https://github.com/pydt/api/blob/00a352b0b845b8ce097290142d122458c5046817/functions/sns/userTurnNotification.js">see the userTurnNotification handler in the API&lt;/a>):&lt;/p>
+&lt;div class="collapsable-code">
+&lt;input id="568374219" type="checkbox" />
+&lt;label for="568374219">
+&lt;span class="collapsable-code__language">javascript&lt;/span>
+&lt;span class="collapsable-code__toggle" data-label-expand="△" data-label-collapse="▽">&lt;/span>
+&lt;/label>
+&lt;pre class="language-javascript" >&lt;code>
+const iotData = new AWS.IotData({endpoint: &amp;#39;a21s639tnrshxf.iot.us-east-1.amazonaws.com&amp;#39;});
+function notifyUserClient(user) {
+return iotData.publish({
+topic: `/pydt/${process.env.SERVERLESS_STAGE}/user/${user.steamId}/gameupdate`,
+payload: &amp;#34;Hello!&amp;#34;,
+qos: 0
+}).promise();
+}
+&lt;/code>&lt;/pre>
+&lt;/div>
+&lt;p>That&amp;rsquo;s it - all we have to do is point the client at the correct endpoint, and publish a message to the topic for the appropriate user! Notice the qos setting of 0 - that just means fire and forget. If the client is online and ready to receive the message they&amp;rsquo;ll get it, if not, no big deal, just throw the message away.&lt;/p>
+&lt;h2 id="its-a-bit-anticlimactic">It&amp;rsquo;s a bit anticlimactic&amp;hellip;&lt;/h2>
+&lt;p>Yeah, that&amp;rsquo;s really all it took to get push notifications working in PYDT! If you do need to authenticate the users you&amp;rsquo;re sending messages to this obviously gets quite a bit more complicated, &lt;a href="https://serverless.com/blog/serverless-notifications-on-aws/">here&amp;rsquo;s a good blog post&lt;/a> on serverless.com that describes the extra steps you&amp;rsquo;d need to do. Good luck!&lt;/p></content></item></channel></rss>

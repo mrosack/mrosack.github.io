@@ -4,7 +4,7 @@
 <meta charset=utf-8>
 <meta name=viewport content="width=device-width,initial-scale=1">
 <meta name=description content="I&amp;rsquo;ve been wanting to retire the Wordpress site I threw up 4 years ago when I went independent pretty much from the moment I published it. About a year and a half ago I finally got serious and started working on a replacement using https://www.11ty.dev/, but I&amp;rsquo;m just not enough of a CSS guru to make something look great from scratch. This Christmas break I decided to give it another go and took a look at https://gohugo.">
-<meta name=keywords content=",">
+<meta name=keywords content="docker,hugo,windows,bash">
 <meta name=robots content="noodp">
 <link rel=canonical href=/posts/hugo-windows-docker/>
 <link rel=stylesheet href=assets/style.css>
@@ -58,23 +58,28 @@
 <span class=post-date>
 2021-12-25
 </span>
+<span class=post-author>:: Mike Rosack</span>
+<span class=post-reading-time>:: 3 min read (514 words)</span>
 </div>
 <span class=post-tags>
-#<a href=tags/></a>&nbsp;
-#<a href=tags/></a>&nbsp;
+#<a href=tags/docker/>docker</a>&nbsp;
+#<a href=tags/hugo/>hugo</a>&nbsp;
+#<a href=tags/windows/>windows</a>&nbsp;
+#<a href=tags/bash/>bash</a>&nbsp;
 </span>
 <div class=post-content><div>
 <p>I&rsquo;ve been wanting to retire the Wordpress site I threw up 4 years ago when I went independent pretty much from the moment I published it. About a year and a half ago I finally got serious and started working on a replacement using <a href=Eleventy>https://www.11ty.dev/</a>, but I&rsquo;m just not enough of a CSS guru to make something look great from scratch. This Christmas break I decided to give it another go and took a look at <a href=Hugo>https://gohugo.io/</a>, which I had originally dismissed because I wanted something javascripty, but then I started using it and got from 0 to a pretty nice site in just a day or two.</p>
 <p>That said, there were a couple hangups I had to get over, mostly because I&rsquo;m a stubborn Windows user from my days working with .NET. I didn&rsquo;t want to install the Hugo binary locally, and there&rsquo;s a nice <a href=https://hub.docker.com/r/klakegg/hugo/>Hugo docker image</a>, so I wanted to set up a dev env to run Hugo from docker. That seems easy, but it never is on Windows. Here&rsquo;s the final script I ended up with, but we&rsquo;ll talk through some issues I had:</p>
 <div class=collapsable-code>
-<input id=965134728 type=checkbox>
-<label for=965134728>
+<input id=958217364 type=checkbox>
+<label for=958217364>
 <span class=collapsable-code__language>javascript</span>
 <span class=collapsable-code__toggle data-label-expand=△ data-label-collapse=▽></span>
 </label>
 <pre class=language-javascript><code>
 #!/bin/bash
 
+HUGO_VERSION=0.91.2
 platform=&#34;unix&#34;
 
 if [ &#34;$OSTYPE&#34; = &#34;msys&#34; ] || [ &#34;$OSTYPE&#34; = &#34;cygwin&#34; ]; then
@@ -91,9 +96,9 @@ do
 done
 
 if [ $platform = &#34;windows&#34; ]; then
-    winpty bash -c &#34;MSYS_NO_PATHCONV=1 docker run --rm -it -v $(pwd):/src -p 1313:1313 klakegg/hugo:0.91.2 $params&#34;
+    winpty bash -c &#34;MSYS_NO_PATHCONV=1 docker run --rm -it -v $(pwd):/src -p 1313:1313 klakegg/hugo:$HUGO_VERSION $params&#34;
 else
-    docker run --rm -it -v $(pwd):/src -p 1313:1313 klakegg/hugo:0.91.2 $params
+    docker run --rm -it -v $(pwd):/src -p 1313:1313 klakegg/hugo:$HUGO_VERSION $params
 fi
 </code></pre>
 </div>
@@ -108,11 +113,7 @@ fi
 <p><strong>File watching broken:</strong> On the computer I was developing on I had WSL 1, not 2, but I think this issue would be present on WSL 2 if you&rsquo;re developing on the Windows file system and not the Linux image - because the data is shared over a file share checking for file updates doesn&rsquo;t work. Hugo has a workaround for this with the <code>--poll</code> option, so I added a special case to check if we&rsquo;re running the server and add the poll command automatically on windows.</p>
 </li>
 </ul>
-<p>After all this, I could run the standard Hugo command line stuff like:</p>
-<ul>
-<li><code>./hugo-docker.sh server</code></li>
-<li><code>./hugo-docker.sh new posts/hugo-windows-docker.md</code></li>
-</ul>
+<p>After all this, I could run the standard Hugo command line stuff like <code>./hugo-docker.sh server</code> and <code>./hugo-docker.sh new posts/hugo-windows-docker.md</code>, and I could also include the script in my github actions workflow to build and deploy the site. Check out the full repo here if you&rsquo;re interested: <a href=https://github.com/mrosack/mrosack.github.io>https://github.com/mrosack/mrosack.github.io</a></p>
 </div></div>
 </div>
 </div>

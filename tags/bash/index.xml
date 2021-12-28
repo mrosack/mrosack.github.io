@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>bash on Rosack Software Solutions</title><link>/tags/bash/</link><description>Recent content in bash on Rosack Software Solutions</description><generator>Hugo -- gohugo.io</generator><language>en-us</language><lastBuildDate>Sat, 25 Dec 2021 12:07:32 +0000</lastBuildDate><atom:link href="/tags/bash/index.xml" rel="self" type="application/rss+xml"/><item><title>Developing a Hugo Site on Windows with Docker</title><link>/posts/hugo-windows-docker/</link><pubDate>Sat, 25 Dec 2021 12:07:32 +0000</pubDate><guid>/posts/hugo-windows-docker/</guid><description>I&amp;rsquo;ve been wanting to retire the Wordpress site I threw up 4 years ago when I went independent pretty much from the moment I published it. About a year and a half ago I finally got serious and started working on a replacement using https://www.11ty.dev/, but I&amp;rsquo;m just not enough of a CSS guru to make something look great from scratch. This Christmas break I decided to give it another go and took a look at https://gohugo.</description><content>&lt;p>I&amp;rsquo;ve been wanting to retire the Wordpress site I threw up 4 years ago when I went independent pretty much from the moment I published it. About a year and a half ago I finally got serious and started working on a replacement using &lt;a href="Eleventy">https://www.11ty.dev/&lt;/a>, but I&amp;rsquo;m just not enough of a CSS guru to make something look great from scratch. This Christmas break I decided to give it another go and took a look at &lt;a href="Hugo">https://gohugo.io/&lt;/a>, which I had originally dismissed because I wanted something javascripty, but then I started using it and got from 0 to a pretty nice site in just a day or two.&lt;/p>
+&lt;p>That said, there were a couple hangups I had to get over, mostly because I&amp;rsquo;m a stubborn Windows user from my days working with .NET. I didn&amp;rsquo;t want to install the Hugo binary locally, and there&amp;rsquo;s a nice &lt;a href="https://hub.docker.com/r/klakegg/hugo/">Hugo docker image&lt;/a>, so I wanted to set up a dev env to run Hugo from docker. That seems easy, but it never is on Windows. Here&amp;rsquo;s the final script I ended up with, but we&amp;rsquo;ll talk through some issues I had:&lt;/p>
+&lt;div class="collapsable-code">
+&lt;input id="958217364" type="checkbox" />
+&lt;label for="958217364">
+&lt;span class="collapsable-code__language">javascript&lt;/span>
+&lt;span class="collapsable-code__toggle" data-label-expand="△" data-label-collapse="▽">&lt;/span>
+&lt;/label>
+&lt;pre class="language-javascript" >&lt;code>
+#!/bin/bash
+HUGO_VERSION=0.91.2
+platform=&amp;#34;unix&amp;#34;
+if [ &amp;#34;$OSTYPE&amp;#34; = &amp;#34;msys&amp;#34; ] || [ &amp;#34;$OSTYPE&amp;#34; = &amp;#34;cygwin&amp;#34; ]; then
+platform=&amp;#34;windows&amp;#34;
+fi
+for i in $*;
+do
+if [ $platform == &amp;#34;windows&amp;#34; ] &amp;amp;&amp;amp; [ &amp;#34;$i&amp;#34; == &amp;#34;server&amp;#34; ]; then
+params=&amp;#34;$params server --poll 1s&amp;#34;
+else
+params=&amp;#34;$params $i&amp;#34;
+fi
+done
+if [ $platform = &amp;#34;windows&amp;#34; ]; then
+winpty bash -c &amp;#34;MSYS_NO_PATHCONV=1 docker run --rm -it -v $(pwd):/src -p 1313:1313 klakegg/hugo:$HUGO_VERSION $params&amp;#34;
+else
+docker run --rm -it -v $(pwd):/src -p 1313:1313 klakegg/hugo:$HUGO_VERSION $params
+fi
+&lt;/code>&lt;/pre>
+&lt;/div>
+&lt;ul>
+&lt;li>
+&lt;p>&lt;strong>Path Conversion:&lt;/strong> Windows bash tries to be helpful and convert paths for you, but this can screw up the docker -v parameter to mount volumes. Adding &lt;code>MSYS_NO_PATHCONV=1&lt;/code> as an environment variable takes care of that issue.&lt;/p>
+&lt;/li>
+&lt;li>
+&lt;p>&lt;strong>General winpty issues:&lt;/strong> If you&amp;rsquo;ve done much with Docker and Windows, you&amp;rsquo;re probably familiar with this: &lt;code>the input device is not a TTY. If you are using mintty, try prefixing the command with 'winpty'&lt;/code>. But it&amp;rsquo;s never as easy as just adding winpty at the front - just following that suggestion caused the parameters not to be passed in correctly. I ended up using winpty to call a bash subprocess, passing in the entire command to run.&lt;/p>
+&lt;/li>
+&lt;li>
+&lt;p>&lt;strong>File watching broken:&lt;/strong> On the computer I was developing on I had WSL 1, not 2, but I think this issue would be present on WSL 2 if you&amp;rsquo;re developing on the Windows file system and not the Linux image - because the data is shared over a file share checking for file updates doesn&amp;rsquo;t work. Hugo has a workaround for this with the &lt;code>--poll&lt;/code> option, so I added a special case to check if we&amp;rsquo;re running the server and add the poll command automatically on windows.&lt;/p>
+&lt;/li>
+&lt;/ul>
+&lt;p>After all this, I could run the standard Hugo command line stuff like &lt;code>./hugo-docker.sh server&lt;/code> and &lt;code>./hugo-docker.sh new posts/hugo-windows-docker.md&lt;/code>, and I could also include the script in my github actions workflow to build and deploy the site. Check out the full repo here if you&amp;rsquo;re interested: &lt;a href="https://github.com/mrosack/mrosack.github.io">https://github.com/mrosack/mrosack.github.io&lt;/a>&lt;/p></content></item></channel></rss>
