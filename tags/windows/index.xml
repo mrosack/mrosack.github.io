@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>windows on Rosack Software Solutions</title><link>https://www.rosacksoftwaresolutions.com/tags/windows/</link><description>Recent content in windows on Rosack Software Solutions</description><generator>Hugo -- gohugo.io</generator><language>en-us</language><lastBuildDate>Sat, 25 Dec 2021 12:07:32 +0000</lastBuildDate><atom:link href="https://www.rosacksoftwaresolutions.com/tags/windows/index.xml" rel="self" type="application/rss+xml"/><item><title>Developing a Hugo Site on Windows with Docker</title><link>https://www.rosacksoftwaresolutions.com/posts/hugo-windows-docker/</link><pubDate>Sat, 25 Dec 2021 12:07:32 +0000</pubDate><guid>https://www.rosacksoftwaresolutions.com/posts/hugo-windows-docker/</guid><description>I&amp;rsquo;ve been wanting to retire the Wordpress site I threw up 4 years ago when I went independent pretty much from the moment I published it. About a year and a half ago I finally got serious and started working on a replacement using https://www.11ty.dev/, but I&amp;rsquo;m just not enough of a CSS guru to make something look great from scratch. This Christmas break I decided to give it another go and took a look at https://gohugo.</description><content>&lt;p>I&amp;rsquo;ve been wanting to retire the Wordpress site I threw up 4 years ago when I went independent pretty much from the moment I published it. About a year and a half ago I finally got serious and started working on a replacement using &lt;a href="Eleventy">https://www.11ty.dev/&lt;/a>, but I&amp;rsquo;m just not enough of a CSS guru to make something look great from scratch. This Christmas break I decided to give it another go and took a look at &lt;a href="Hugo">https://gohugo.io/&lt;/a>, which I had originally dismissed because I wanted something javascripty, but then I started using it and got from 0 to a pretty nice site in just a day or two.&lt;/p>
 &lt;p>That said, there were a couple hangups I had to get over, mostly because I&amp;rsquo;m a stubborn Windows user from my days working with .NET. I didn&amp;rsquo;t want to install the Hugo binary locally, and there&amp;rsquo;s a nice &lt;a href="https://hub.docker.com/r/klakegg/hugo/">Hugo docker image&lt;/a>, so I wanted to set up a dev env to run Hugo from docker. That seems easy, but it never is on Windows. Here&amp;rsquo;s the final script I ended up with, but we&amp;rsquo;ll talk through some issues I had:&lt;/p>
 &lt;div class="collapsable-code">
-&lt;input id="265478139" type="checkbox" />
-&lt;label for="265478139">
-&lt;span class="collapsable-code__language">javascript&lt;/span>
+&lt;input id="187256349" type="checkbox" />
+&lt;label for="187256349">
+&lt;span class="collapsable-code__language">bash&lt;/span>
 &lt;span class="collapsable-code__toggle" data-label-expand="△" data-label-collapse="▽">&lt;/span>
 &lt;/label>
-&lt;pre class="language-javascript" >&lt;code>
+&lt;pre class="language-bash" >&lt;code>
 #!/bin/bash
 HUGO_VERSION=0.91.2
 platform=&amp;#34;unix&amp;#34;
