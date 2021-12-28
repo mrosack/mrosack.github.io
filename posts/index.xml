@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Posts on Rosack Software Solutions</title><link>https://www.rosacksoftwaresolutions.com/posts/</link><description>Recent content in Posts on Rosack Software Solutions</description><generator>Hugo -- gohugo.io</generator><language>en-us</language><lastBuildDate>Sat, 25 Dec 2021 12:07:32 +0000</lastBuildDate><atom:link href="https://www.rosacksoftwaresolutions.com/posts/index.xml" rel="self" type="application/rss+xml"/><item><title>Developing a Hugo Site on Windows with Docker</title><link>https://www.rosacksoftwaresolutions.com/posts/hugo-windows-docker/</link><pubDate>Sat, 25 Dec 2021 12:07:32 +0000</pubDate><guid>https://www.rosacksoftwaresolutions.com/posts/hugo-windows-docker/</guid><description>I&amp;rsquo;ve been wanting to retire the Wordpress site I threw up 4 years ago when I went independent pretty much from the moment I published it. About a year and a half ago I finally got serious and started working on a replacement using https://www.11ty.dev/, but I&amp;rsquo;m just not enough of a CSS guru to make something look great from scratch. This Christmas break I decided to give it another go and took a look at https://gohugo.</description><content>&lt;p>I&amp;rsquo;ve been wanting to retire the Wordpress site I threw up 4 years ago when I went independent pretty much from the moment I published it. About a year and a half ago I finally got serious and started working on a replacement using &lt;a href="Eleventy">https://www.11ty.dev/&lt;/a>, but I&amp;rsquo;m just not enough of a CSS guru to make something look great from scratch. This Christmas break I decided to give it another go and took a look at &lt;a href="Hugo">https://gohugo.io/&lt;/a>, which I had originally dismissed because I wanted something javascripty, but then I started using it and got from 0 to a pretty nice site in just a day or two.&lt;/p>
+&lt;p>That said, there were a couple hangups I had to get over, mostly because I&amp;rsquo;m a stubborn Windows user from my days working with .NET. I didn&amp;rsquo;t want to install the Hugo binary locally, and there&amp;rsquo;s a nice &lt;a href="https://hub.docker.com/r/klakegg/hugo/">Hugo docker image&lt;/a>, so I wanted to set up a dev env to run Hugo from docker. That seems easy, but it never is on Windows. Here&amp;rsquo;s the final script I ended up with, but we&amp;rsquo;ll talk through some issues I had:&lt;/p>
+&lt;div class="collapsable-code">
+&lt;input id="675194823" type="checkbox" />
+&lt;label for="675194823">
+&lt;span class="collapsable-code__language">javascript&lt;/span>
+&lt;span class="collapsable-code__toggle" data-label-expand="△" data-label-collapse="▽">&lt;/span>
+&lt;/label>
+&lt;pre class="language-javascript" >&lt;code>
+#!/bin/bash
+platform=&amp;#34;unix&amp;#34;
+if [ &amp;#34;$OSTYPE&amp;#34; = &amp;#34;msys&amp;#34; ] || [ &amp;#34;$OSTYPE&amp;#34; = &amp;#34;cygwin&amp;#34; ]; then
+platform=&amp;#34;windows&amp;#34;
+fi
+for i in $*;
+do
+if [ $platform == &amp;#34;windows&amp;#34; ] &amp;amp;&amp;amp; [ &amp;#34;$i&amp;#34; == &amp;#34;server&amp;#34; ]; then
+params=&amp;#34;$params server --poll 1s&amp;#34;
+else
+params=&amp;#34;$params $i&amp;#34;
+fi
+done
+if [ $platform = &amp;#34;windows&amp;#34; ]; then
+winpty bash -c &amp;#34;MSYS_NO_PATHCONV=1 docker run --rm -it -v $(pwd):/src -p 1313:1313 klakegg/hugo:0.91.2 $params&amp;#34;
+else
+docker run --rm -it -v $(pwd):/src -p 1313:1313 klakegg/hugo:0.91.2 $params
+fi
+&lt;/code>&lt;/pre>
+&lt;/div>
+&lt;ul>
+&lt;li>
+&lt;p>&lt;strong>Path Conversion:&lt;/strong> Windows bash tries to be helpful and convert paths for you, but this can screw up the docker -v parameter to mount volumes. Adding &lt;code>MSYS_NO_PATHCONV=1&lt;/code> as an environment variable takes care of that issue.&lt;/p>
+&lt;/li>
+&lt;li>
+&lt;p>&lt;strong>General winpty issues:&lt;/strong> If you&amp;rsquo;ve done much with Docker and Windows, you&amp;rsquo;re probably familiar with this: &lt;code>the input device is not a TTY. If you are using mintty, try prefixing the command with 'winpty'&lt;/code>. But it&amp;rsquo;s never as easy as just adding winpty at the front - just following that suggestion caused the parameters not to be passed in correctly. I ended up using winpty to call a bash subprocess, passing in the entire command to run.&lt;/p>
+&lt;/li>
+&lt;li>
+&lt;p>&lt;strong>File watching broken:&lt;/strong> On the computer I was developing on I had WSL 1, not 2, but I think this issue would be present on WSL 2 if you&amp;rsquo;re developing on the Windows file system and not the Linux image - because the data is shared over a file share checking for file updates doesn&amp;rsquo;t work. Hugo has a workaround for this with the &lt;code>--poll&lt;/code> option, so I added a special case to check if we&amp;rsquo;re running the server and add the poll command automatically on windows.&lt;/p>
+&lt;/li>
+&lt;/ul>
+&lt;p>After all this, I could run the standard Hugo command line stuff like:&lt;/p>
+&lt;ul>
+&lt;li>&lt;code>./hugo-docker.sh server&lt;/code>&lt;/li>
+&lt;li>&lt;code>./hugo-docker.sh new posts/hugo-windows-docker.md&lt;/code>&lt;/li>
+&lt;/ul></content></item><item><title>Real Time Serverless Notifications with AWS IoT</title><link>https://www.rosacksoftwaresolutions.com/posts/serverless-notifications-aws-iot/</link><pubDate>Sat, 26 Aug 2017 11:11:13 +0000</pubDate><guid>https://www.rosacksoftwaresolutions.com/posts/serverless-notifications-aws-iot/</guid><description>A big downside of current &amp;ldquo;Serverless&amp;rdquo; architectures is, well, you don&amp;rsquo;t have a server! Because of this, some things that we take for granted in web applications today are hard to do in a Serverless model - take real time notifications for example. Usually you&amp;rsquo;d use SignalR, Socket.IO, or some other framework to help you set up and use websocket connections, but those frameworks require a long-lived connection to a server.</description><content>&lt;p>A big downside of current &amp;ldquo;Serverless&amp;rdquo; architectures is, well, you don&amp;rsquo;t have a server! Because of this, some things that we take for granted in web applications today are hard to do in a Serverless model - take real time notifications for example. Usually you&amp;rsquo;d use &lt;a href="https://www.asp.net/signalr">SignalR&lt;/a>, &lt;a href="https://socket.io/">Socket.IO&lt;/a>, or some other framework to help you set up and use websocket connections, but those frameworks require a long-lived connection to a server. You could use a technique like long polling in the serverless model, but serverless options charge by the second, and every second you&amp;rsquo;ve got the connection open doing nothing you&amp;rsquo;re being charged for it. So what to do?&lt;/p>
+&lt;p>I had this dilemma with &lt;a href="https://www.playyourdamnturn.com/">PYDT&amp;rsquo;s&lt;/a> desktop client - it needs to know when a new turn is available for the user to play, but the only way to check for updated turns in a standard serverless model is dumb polling. Unfortunately, the cost of AWS API Gateway (which serves your requests for Lambda) is $4/million requests, so that was going to be way too expensive if we polled once a minute (46K requests a month per user, assuming a user&amp;rsquo;s PC is always on). What I originally ended up doing was caching game state to S3, and polling S3 instead of the API, which is an order of magnitude cheaper (that same $4 gets you about 10 million requests in S3).&lt;/p>
+&lt;p>That worked fine, but it was hacky, and obviously websockets/push notifications were made for scenarios like this. So what do we do?&lt;/p>
+&lt;p>&lt;a href="https://aws.amazon.com/iot">AWS IoT&lt;/a> to the rescue! While it&amp;rsquo;s not really designed for this purpose, it exposes an &lt;a href="http://mqtt.org/">MQTT&lt;/a> server that you can use to talk to &amp;ldquo;devices&amp;rdquo; out on the internet, but for our purposes our devices are just going to be normal web browsers. Let&amp;rsquo;s walk through the code I used to get this set up&amp;hellip;&lt;/p>
+&lt;span class="disclaimer">
+&lt;p>DISCLAIMER: The PYDT use case is very simple - no security is required, because no one will care if the messages we&amp;rsquo;re sending (&amp;ldquo;it&amp;rsquo;s your turn&amp;rdquo;) are intercepted by a user that wasn&amp;rsquo;t the intended receiver. Adding security complicates this scenario a lot, but this is a good example of what&amp;rsquo;s possible!&lt;/p>
+&lt;/span>
+&lt;p>At it&amp;rsquo;s most basic level, AWS IoT exposes an MQTT endpoint that you can use for pub/sub of messages. There&amp;rsquo;s a lot of other cool functionality in there, but for our purposes that&amp;rsquo;s all we care about. We want each user to only get messages when there&amp;rsquo;s a new turn in one of their games, but nobody else&amp;rsquo;s, so each user will need their own topic to subscribe to. In PYDT, that looks like &lt;strong>/pydt/ENVIRONMENT/user/STEAM_ID/gameupdate&lt;/strong>, where ENVIRONMENT is dev or prod, and STEAM_ID is, well, the user&amp;rsquo;s Steam ID.&lt;/p>
+&lt;h2 id="client-side">Client Side&lt;/h2>
+&lt;p>On the client, we&amp;rsquo;re using &lt;a href="https://github.com/aws/aws-iot-device-sdk-js">aws-iot-device-sdk-js&lt;/a>, a library that wraps an MQTT client and adds additional AWS IoT-specific functionality. It&amp;rsquo;s not too hard to set things up, here&amp;rsquo;s all the code it takes (&lt;a href="https://github.com/aws/aws-iot-device-sdk-js">starting at line 114 here&lt;/a>):&lt;/p>
+&lt;div class="collapsable-code">
+&lt;input id="319284567" type="checkbox" />
+&lt;label for="319284567">
+&lt;span class="collapsable-code__language">javascript&lt;/span>
+&lt;span class="collapsable-code__toggle" data-label-expand="△" data-label-collapse="▽">&lt;/span>
+&lt;/label>
+&lt;pre class="language-javascript" >&lt;code>
+configureIot() {
+const env = PYDT_CONFIG.PROD ? &amp;#39;prod&amp;#39; : &amp;#39;dev&amp;#39;;
+const topic = `/pydt/${env}/user/${this.profile.steamid}/gameupdate`;
+this.iotDevice = awsIot.device({
+region: &amp;#39;us-east-1&amp;#39;,
+protocol: &amp;#39;wss&amp;#39;,
+keepalive: 600,
+accessKeyId: PYDT_CONFIG.IOT_CLIENT_ACCESS_KEY,
+secretKey: PYDT_CONFIG.IOT_CLIENT_SECRET_KEY,
+host: &amp;#39;a21s639tnrshxf.iot.us-east-1.amazonaws.com&amp;#39;
+});
+this.iotDevice.on(&amp;#39;connect&amp;#39;, () =&amp;gt; {
+this.iotDevice.subscribe(topic);
+});
+this.iotDevice.on(&amp;#39;error&amp;#39;, err =&amp;gt; {
+console.log(&amp;#39;IoT error...&amp;#39;, err);
+});
+this.iotDevice.on(&amp;#39;message&amp;#39;, (recTopic, message) =&amp;gt; {
+console.log(&amp;#39;received message from topic &amp;#39;, recTopic);
+if (recTopic === topic) {
+this.loadGames();
+}
+});
+}
+&lt;/code>&lt;/pre>
+&lt;/div>
+&lt;p>A couple things to note here:&lt;/p>
+&lt;ul>
+&lt;li>
+&lt;p>We set the keepalive to 600 seconds. By default, I think the keepalive is 60, which means the client will ping the server once a minute to make sure the connection is open. AWS doesn&amp;rsquo;t make a big deal out of this in their documentation, but &lt;strong>YOU GET CHARGED FOR EVERY PING&lt;/strong>, and at $5/million messages that&amp;rsquo;s even worse than our dumb polling pricing! On a desktop computer, the connection should be fairly stable anyway, so only pinging once every 10 minutes isn&amp;rsquo;t that big of a deal (and I might even make that higher someday).&lt;/p>
+&lt;/li>
+&lt;li>
+&lt;p>The access and secret keys are set up to only have permissions to subscribe to a topic and receive messages, so a malicious user wouldn&amp;rsquo;t be able to take those keys and publish messages to everyone.&lt;/p>
+&lt;/li>
+&lt;/ul>
+&lt;p>Easy, huh? That&amp;rsquo;s all it takes, and every time the server sends us a message we&amp;rsquo;ll receive it in the message callback!&lt;/p>
+&lt;h2 id="server-side">Server Side&lt;/h2>
+&lt;p>The server side is even easier, believe it or not. We just use the IotData class in the aws-sdk (&lt;a href="https://github.com/pydt/api/blob/00a352b0b845b8ce097290142d122458c5046817/functions/sns/userTurnNotification.js">see the userTurnNotification handler in the API&lt;/a>):&lt;/p>
+&lt;div class="collapsable-code">
+&lt;input id="785236149" type="checkbox" />
+&lt;label for="785236149">
+&lt;span class="collapsable-code__language">javascript&lt;/span>
+&lt;span class="collapsable-code__toggle" data-label-expand="△" data-label-collapse="▽">&lt;/span>
+&lt;/label>
+&lt;pre class="language-javascript" >&lt;code>
+const iotData = new AWS.IotData({endpoint: &amp;#39;a21s639tnrshxf.iot.us-east-1.amazonaws.com&amp;#39;});
+function notifyUserClient(user) {
+return iotData.publish({
+topic: `/pydt/${process.env.SERVERLESS_STAGE}/user/${user.steamId}/gameupdate`,
+payload: &amp;#34;Hello!&amp;#34;,
+qos: 0
+}).promise();
+}
+&lt;/code>&lt;/pre>
+&lt;/div>
+&lt;p>That&amp;rsquo;s it - all we have to do is point the client at the correct endpoint, and publish a message to the topic for the appropriate user! Notice the qos setting of 0 - that just means fire and forget. If the client is online and ready to receive the message they&amp;rsquo;ll get it, if not, no big deal, just throw the message away.&lt;/p>
+&lt;h2 id="its-a-bit-anticlimactic">It&amp;rsquo;s a bit anticlimactic&amp;hellip;&lt;/h2>
+&lt;p>Yeah, that&amp;rsquo;s really all it took to get push notifications working in PYDT! If you do need to authenticate the users you&amp;rsquo;re sending messages to this obviously gets quite a bit more complicated, &lt;a href="https://serverless.com/blog/serverless-notifications-on-aws/">here&amp;rsquo;s a good blog post&lt;/a> on serverless.com that describes the extra steps you&amp;rsquo;d need to do. Good luck!&lt;/p></content></item><item><title>Serverless, "Monolithic" APIs, and TSOA</title><link>https://www.rosacksoftwaresolutions.com/posts/serverless-monolithic-apis-and-tsoa/</link><pubDate>Mon, 20 Mar 2017 13:30:50 +0000</pubDate><guid>https://www.rosacksoftwaresolutions.com/posts/serverless-monolithic-apis-and-tsoa/</guid><description>I&amp;rsquo;ve been geeking out quite a bit over Functions as a Service and the Serverless Framework for the past year or so. I wrote the backend for Play Your Damn Turn using it, and I think it&amp;rsquo;s great for startup scenarios - you can write something and get it out there without having to worry about the costs of hosting, and if it suddenly becomes popular it&amp;rsquo;s already built to scale.</description><content>&lt;p>I&amp;rsquo;ve been geeking out quite a bit over Functions as a Service and the &lt;a href="https://serverless.com/">Serverless Framework&lt;/a> for the past year or so. I wrote the backend for &lt;a href="https://www.playyourdamnturn.com/">Play Your Damn Turn&lt;/a> using it, and I think it&amp;rsquo;s great for startup scenarios - you can write something and get it out there without having to worry about the costs of hosting, and if it suddenly becomes popular it&amp;rsquo;s already built to scale.&lt;/p>
+&lt;p>That said, the Serverless Framework is still in it&amp;rsquo;s infancy, and there aren&amp;rsquo;t tons of best practices out there around using it. The Serverless team had a good blog post last year describing a couple possible approaches of how you could structure your application: &lt;a href="https://serverless.com/blog/serverless-architecture-code-patterns/">Serverless Code Patterns&lt;/a>. In short, that article calls out 4 different possible approaches: Microservices, where every function maps to one API call; Services/Monolithic, where you group multiple API calls into one function; and Graph, where you just expose GraphQL from one function. For PYDT, I did things Microservices style, partly because I started writing PYDT before that article was written, and partly because all of the examples out there show how you to do things the Microservices way.&lt;/p>
+&lt;p>The Microservices pattern has a couple big downsides, though:&lt;/p>
+&lt;ul>
+&lt;li>
+&lt;p>&lt;strong>Cold Starts&lt;/strong>: When a FaaS function gets called, what&amp;rsquo;s really happening behind the scenes is a Docker container is spinning up, loading your code, and executing it. That spin up process isn&amp;rsquo;t free, and can take on the order of seconds to be ready for use. However, if you call a function multiple times in short order, the container that the code originally ran in can be reused, removing the spin up cost.&lt;/p>
+&lt;/li>
+&lt;li>
+&lt;p>&lt;strong>CloudFormation Limits&lt;/strong>: Serverless uses CloudFormation behind the scenes for AWS deployments. Unfortunately, &lt;a href="http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/cloudformation-limits.html">CloudFormation has limits&lt;/a>, and there&amp;rsquo;s &lt;a href="https://github.com/serverless/serverless/issues/2853">only so many functions you can add into a Serverless service&lt;/a> before you hit these limits. I ran into this with PYDT, and I&amp;rsquo;ve had to resort to some ugly hacks to be able to fit more and more functions into the service. There&amp;rsquo;s not much they can do to fix this without getting into split CloudFormation stacks, and I think that&amp;rsquo;s pretty far down on their list at the moment.&lt;/p>
+&lt;/li>
+&lt;/ul>
+&lt;p>I&amp;rsquo;ve been kicking off a new project over the past couple of days, and because of those downsides I really didn&amp;rsquo;t want to go down the Microservices path again. Also, using Angular2 has really made me love Typescript, and I wanted to use it for the backend. If I was going to do that, couldn&amp;rsquo;t I get some cool benefits from having a strongly typed backend like auto-generation of Swagger schemas?&lt;/p>
+&lt;p>Why yes, yes I could! I stumbled upon the &lt;a href="https://github.com/lukeautry/tsoa">TSOA Framework&lt;/a>, which is suprisingly the only framework I could find that&amp;rsquo;s using the benefits of Typescript to create an API backend that generates all the boilerplate for you. I forked their startup project, started playing around, and this is the result: &lt;a href="https://github.com/mrosack/tsoa-serverless-example">https://github.com/mrosack/tsoa-serverless-example&lt;/a>. It&amp;rsquo;s still super raw, but even in its initial state it&amp;rsquo;s got a lot of cool benefits over doing things the standard Javascript/Microservice way:&lt;/p>
+&lt;ul>
+&lt;li>
+&lt;p>&lt;strong>Automatically Generate swagger.json&lt;/strong>: This is the big carrot that TSOA waves out in front of you, and I love it. Keeping a swagger definition file up to date manually is a gigantic pain, and without eternal vigilance it can become useless pretty quickly.&lt;/p>
+&lt;/li>
+&lt;li>
+&lt;p>&lt;strong>Dependency Injection&lt;/strong>: This is another thing that comes out of the box with TSOA. It uses &lt;a href="https://github.com/inversify/InversifyJS">InversifyJS&lt;/a> for it&amp;rsquo;s IOC container, and adds some sweet syntatic sugar to help hook up all the injections for you.&lt;/p>
+&lt;/li>
+&lt;li>
+&lt;p>&lt;strong>No Cold Starts/Limits&lt;/strong>: The entire API is being deployed to a single Lambda function using &lt;a href="http://docs.aws.amazon.com/apigateway/latest/developerguide/api-gateway-create-api-as-simple-proxy-for-http.html">API Gateway Proxy/ANY&lt;/a>, so you don&amp;rsquo;t need to worry about cold starts for infrequently used functions or those pesky CloudFormation limits.&lt;/p>
+&lt;/li>
+&lt;/ul>
+&lt;p>&lt;a href="https://github.com/mrosack/tsoa-serverless-example">Go take a look and let me know what you&amp;rsquo;ll think!&lt;/a> I&amp;rsquo;ll be updating things as I get deeper into my own project, but I think the value is pretty clear even now and I&amp;rsquo;m really excited to keep playing with it!&lt;/p></content></item></channel></rss>

@@ -1,0 +1,153 @@
+<!doctype html><html lang=en>
+<head>
+<title>Developing a Hugo Site on Windows with Docker :: Rosack Software Solutions</title>
+<meta charset=utf-8>
+<meta name=viewport content="width=device-width,initial-scale=1">
+<meta name=description content="I&amp;rsquo;ve been wanting to retire the Wordpress site I threw up 4 years ago when I went independent pretty much from the moment I published it. About a year and a half ago I finally got serious and started working on a replacement using https://www.11ty.dev/, but I&amp;rsquo;m just not enough of a CSS guru to make something look great from scratch. This Christmas break I decided to give it another go and took a look at https://gohugo.">
+<meta name=keywords content=",">
+<meta name=robots content="noodp">
+<link rel=canonical href=https://www.rosacksoftwaresolutions.com/posts/hugo-windows-docker/>
+<link rel=stylesheet href=https://www.rosacksoftwaresolutions.com/assets/style.css>
+<link rel=stylesheet href=https://www.rosacksoftwaresolutions.com/assets/blue.css>
+<link rel=stylesheet href=https://www.rosacksoftwaresolutions.com/style.css>
+<link rel=apple-touch-icon href=https://www.rosacksoftwaresolutions.com/img/apple-touch-icon-192x192.png>
+<link rel="shortcut icon" href=https://www.rosacksoftwaresolutions.com/img/favicon/blue.png>
+<meta name=twitter:card content="summary">
+<meta property="og:locale" content="en">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Developing a Hugo Site on Windows with Docker">
+<meta property="og:description" content="I&amp;rsquo;ve been wanting to retire the Wordpress site I threw up 4 years ago when I went independent pretty much from the moment I published it. About a year and a half ago I finally got serious and started working on a replacement using https://www.11ty.dev/, but I&amp;rsquo;m just not enough of a CSS guru to make something look great from scratch. This Christmas break I decided to give it another go and took a look at https://gohugo.">
+<meta property="og:url" content="https://www.rosacksoftwaresolutions.com/posts/hugo-windows-docker/">
+<meta property="og:site_name" content="Rosack Software Solutions">
+<meta property="og:image" content="https://www.rosacksoftwaresolutions.com/">
+<meta property="og:image:width" content="2048">
+<meta property="og:image:height" content="1024">
+<meta property="article:published_time" content="2021-12-25 12:07:32 +0000 UTC">
+</head>
+<body class=blue>
+<div class="container center headings--one-size">
+<header class=header>
+<div class=header__inner>
+<div class=header__logo>
+<a href=https://www.rosacksoftwaresolutions.com/>
+<div class=logo>
+<img src=/img/RSS-logo.png>
+</div>
+</a>
+</div>
+<div class=menu-trigger>menu</div>
+</div>
+<nav class=menu>
+<ul class="menu__inner menu__inner--desktop">
+<li><a href=/portfolio>Portfolio</a></li>
+<li><a href=/posts>Blog</a></li>
+<li><a href=/about>About Mike</a></li>
+</ul>
+<ul class="menu__inner menu__inner--mobile">
+<li><a href=/portfolio>Portfolio</a></li>
+<li><a href=/posts>Blog</a></li>
+<li><a href=/about>About Mike</a></li>
+</ul>
+</nav>
+</header>
+<div class=content>
+<div class=post>
+<h1 class=post-title>
+<a href=https://www.rosacksoftwaresolutions.com/posts/hugo-windows-docker/>Developing a Hugo Site on Windows with Docker</a></h1>
+<div class=post-meta>
+<span class=post-date>
+2021-12-25
+</span>
+</div>
+<span class=post-tags>
+#<a href=https://www.rosacksoftwaresolutions.com/tags/></a>&nbsp;
+#<a href=https://www.rosacksoftwaresolutions.com/tags/></a>&nbsp;
+</span>
+<div class=post-content><div>
+<p>I&rsquo;ve been wanting to retire the Wordpress site I threw up 4 years ago when I went independent pretty much from the moment I published it. About a year and a half ago I finally got serious and started working on a replacement using <a href=Eleventy>https://www.11ty.dev/</a>, but I&rsquo;m just not enough of a CSS guru to make something look great from scratch. This Christmas break I decided to give it another go and took a look at <a href=Hugo>https://gohugo.io/</a>, which I had originally dismissed because I wanted something javascripty, but then I started using it and got from 0 to a pretty nice site in just a day or two.</p>
+<p>That said, there were a couple hangups I had to get over, mostly because I&rsquo;m a stubborn Windows user from my days working with .NET. I didn&rsquo;t want to install the Hugo binary locally, and there&rsquo;s a nice <a href=https://hub.docker.com/r/klakegg/hugo/>Hugo docker image</a>, so I wanted to set up a dev env to run Hugo from docker. That seems easy, but it never is on Windows. Here&rsquo;s the final script I ended up with, but we&rsquo;ll talk through some issues I had:</p>
+<div class=collapsable-code>
+<input id=675194823 type=checkbox>
+<label for=675194823>
+<span class=collapsable-code__language>javascript</span>
+<span class=collapsable-code__toggle data-label-expand=△ data-label-collapse=▽></span>
+</label>
+<pre class=language-javascript><code>
+#!/bin/bash
+
+platform=&#34;unix&#34;
+
+if [ &#34;$OSTYPE&#34; = &#34;msys&#34; ] || [ &#34;$OSTYPE&#34; = &#34;cygwin&#34; ]; then
+  platform=&#34;windows&#34;
+fi
+
+for i in $*;
+do
+    if [ $platform == &#34;windows&#34; ] &amp;&amp; [ &#34;$i&#34; == &#34;server&#34; ]; then
+        params=&#34;$params server --poll 1s&#34;
+    else
+        params=&#34;$params $i&#34;
+    fi
+done
+
+if [ $platform = &#34;windows&#34; ]; then
+    winpty bash -c &#34;MSYS_NO_PATHCONV=1 docker run --rm -it -v $(pwd):/src -p 1313:1313 klakegg/hugo:0.91.2 $params&#34;
+else
+    docker run --rm -it -v $(pwd):/src -p 1313:1313 klakegg/hugo:0.91.2 $params
+fi
+</code></pre>
+</div>
+<ul>
+<li>
+<p><strong>Path Conversion:</strong> Windows bash tries to be helpful and convert paths for you, but this can screw up the docker -v parameter to mount volumes. Adding <code>MSYS_NO_PATHCONV=1</code> as an environment variable takes care of that issue.</p>
+</li>
+<li>
+<p><strong>General winpty issues:</strong> If you&rsquo;ve done much with Docker and Windows, you&rsquo;re probably familiar with this: <code>the input device is not a TTY. If you are using mintty, try prefixing the command with 'winpty'</code>. But it&rsquo;s never as easy as just adding winpty at the front - just following that suggestion caused the parameters not to be passed in correctly. I ended up using winpty to call a bash subprocess, passing in the entire command to run.</p>
+</li>
+<li>
+<p><strong>File watching broken:</strong> On the computer I was developing on I had WSL 1, not 2, but I think this issue would be present on WSL 2 if you&rsquo;re developing on the Windows file system and not the Linux image - because the data is shared over a file share checking for file updates doesn&rsquo;t work. Hugo has a workaround for this with the <code>--poll</code> option, so I added a special case to check if we&rsquo;re running the server and add the poll command automatically on windows.</p>
+</li>
+</ul>
+<p>After all this, I could run the standard Hugo command line stuff like:</p>
+<ul>
+<li><code>./hugo-docker.sh server</code></li>
+<li><code>./hugo-docker.sh new posts/hugo-windows-docker.md</code></li>
+</ul>
+</div></div>
+</div>
+</div>
+<div class=post style=display:grid;grid-template-columns:repeat(auto-fit,minmax(384px,1fr));grid-gap:1rem>
+<div>
+<h1 class=post-title>Social Links</h1>
+<div style=display:flex;justify-content:space-around;margin-bottom:50px>
+<a href=https://twitter.com/mike_rosack/ target=_blank><img alt="mike_rosack on twitter" src=/img/twitter.png></a>
+<a href=https://www.linkedin.com/in/mrosack/ target=_blank><img alt="mrosack on linked in" src=/img/linkedin.png></a>
+<a href=https://github.com/mrosack/ target=_blank><img alt="mrosack on github" src=/img/github.png></a>
+</div>
+<h1 class=post-title>RSS RSS Feed</h1>
+<div style=display:flex;justify-content:space-around;margin-bottom:50px>
+<a href=/index.xml><img alt="RSS feed" src=/img/feed.png></a>
+</div>
+<h1 class=post-title>Email Us!</h1>
+<p style=margin-bottom:50px>We'd love to hear from you! <a href=mailto:mike@rosacksoftwaresolutions.com>mike@rosacksoftwaresolutions.com</a></p>
+</div>
+<div>
+<h1 class=post-title><a href=https://twitter.com/mike_rosack>Follow me on Twitter</a></h1>
+<a class=twitter-timeline data-height=500 data-theme=dark href="https://twitter.com/mike_rosack?ref_src=twsrc%5Etfw">Tweets by mike_rosack</a> <script async src=https://platform.twitter.com/widgets.js></script>
+</div>
+</div>
+<footer class=footer>
+<div class=footer__inner>
+<div class=copyright>
+<span>© 2021 <a href=mailto:mike@rosacksoftwaresolutions.com>Rosack Software Solutions, LLC</a></span>
+<span>:: Powered by <a href=http://gohugo.io>Hugo</a>&nbsp;</span>
+<span>:: Theme made by <a href=https://twitter.com/panr>panr</a></span>
+</div>
+</div>
+<p style=text-align:center;font-size:9px>Icons from <a target=_blank href=https://icons8.com>icons8.com</a></p>
+</footer>
+<script src=https://www.rosacksoftwaresolutions.com/assets/main.js></script>
+<script src=https://www.rosacksoftwaresolutions.com/assets/prism.js></script>
+</div>
+</body>
+</html>

@@ -1,0 +1,130 @@
+<!doctype html><html lang=en>
+<head>
+<title>Serverless, "Monolithic" APIs, and TSOA :: Rosack Software Solutions</title>
+<meta charset=utf-8>
+<meta name=viewport content="width=device-width,initial-scale=1">
+<meta name=description content="I&amp;rsquo;ve been geeking out quite a bit over Functions as a Service and the Serverless Framework for the past year or so. I wrote the backend for Play Your Damn Turn using it, and I think it&amp;rsquo;s great for startup scenarios - you can write something and get it out there without having to worry about the costs of hosting, and if it suddenly becomes popular it&amp;rsquo;s already built to scale.">
+<meta name=keywords content=",">
+<meta name=robots content="noodp">
+<link rel=canonical href=https://www.rosacksoftwaresolutions.com/posts/serverless-monolithic-apis-and-tsoa/>
+<link rel=stylesheet href=https://www.rosacksoftwaresolutions.com/assets/style.css>
+<link rel=stylesheet href=https://www.rosacksoftwaresolutions.com/assets/blue.css>
+<link rel=stylesheet href=https://www.rosacksoftwaresolutions.com/style.css>
+<link rel=apple-touch-icon href=https://www.rosacksoftwaresolutions.com/img/apple-touch-icon-192x192.png>
+<link rel="shortcut icon" href=https://www.rosacksoftwaresolutions.com/img/favicon/blue.png>
+<meta name=twitter:card content="summary">
+<meta property="og:locale" content="en">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Serverless, &#34;Monolithic&#34; APIs, and TSOA">
+<meta property="og:description" content="I&amp;rsquo;ve been geeking out quite a bit over Functions as a Service and the Serverless Framework for the past year or so. I wrote the backend for Play Your Damn Turn using it, and I think it&amp;rsquo;s great for startup scenarios - you can write something and get it out there without having to worry about the costs of hosting, and if it suddenly becomes popular it&amp;rsquo;s already built to scale.">
+<meta property="og:url" content="https://www.rosacksoftwaresolutions.com/posts/serverless-monolithic-apis-and-tsoa/">
+<meta property="og:site_name" content="Rosack Software Solutions">
+<meta property="og:image" content="https://www.rosacksoftwaresolutions.com/">
+<meta property="og:image:width" content="2048">
+<meta property="og:image:height" content="1024">
+<meta property="article:published_time" content="2017-03-20 13:30:50 +0000 UTC">
+</head>
+<body class=blue>
+<div class="container center headings--one-size">
+<header class=header>
+<div class=header__inner>
+<div class=header__logo>
+<a href=https://www.rosacksoftwaresolutions.com/>
+<div class=logo>
+<img src=/img/RSS-logo.png>
+</div>
+</a>
+</div>
+<div class=menu-trigger>menu</div>
+</div>
+<nav class=menu>
+<ul class="menu__inner menu__inner--desktop">
+<li><a href=/portfolio>Portfolio</a></li>
+<li><a href=/posts>Blog</a></li>
+<li><a href=/about>About Mike</a></li>
+</ul>
+<ul class="menu__inner menu__inner--mobile">
+<li><a href=/portfolio>Portfolio</a></li>
+<li><a href=/posts>Blog</a></li>
+<li><a href=/about>About Mike</a></li>
+</ul>
+</nav>
+</header>
+<div class=content>
+<div class=post>
+<h1 class=post-title>
+<a href=https://www.rosacksoftwaresolutions.com/posts/serverless-monolithic-apis-and-tsoa/>Serverless, &ldquo;Monolithic&rdquo; APIs, and TSOA</a></h1>
+<div class=post-meta>
+<span class=post-date>
+2017-03-20
+</span>
+<span class=post-author>:: Mike Rosack</span>
+</div>
+<span class=post-tags>
+#<a href=https://www.rosacksoftwaresolutions.com/tags/></a>&nbsp;
+#<a href=https://www.rosacksoftwaresolutions.com/tags/></a>&nbsp;
+</span>
+<div class=post-content><div>
+<p>I&rsquo;ve been geeking out quite a bit over Functions as a Service and the <a href=https://serverless.com/>Serverless Framework</a> for the past year or so. I wrote the backend for <a href=https://www.playyourdamnturn.com/>Play Your Damn Turn</a> using it, and I think it&rsquo;s great for startup scenarios - you can write something and get it out there without having to worry about the costs of hosting, and if it suddenly becomes popular it&rsquo;s already built to scale.</p>
+<p>That said, the Serverless Framework is still in it&rsquo;s infancy, and there aren&rsquo;t tons of best practices out there around using it. The Serverless team had a good blog post last year describing a couple possible approaches of how you could structure your application: <a href=https://serverless.com/blog/serverless-architecture-code-patterns/>Serverless Code Patterns</a>. In short, that article calls out 4 different possible approaches: Microservices, where every function maps to one API call; Services/Monolithic, where you group multiple API calls into one function; and Graph, where you just expose GraphQL from one function. For PYDT, I did things Microservices style, partly because I started writing PYDT before that article was written, and partly because all of the examples out there show how you to do things the Microservices way.</p>
+<p>The Microservices pattern has a couple big downsides, though:</p>
+<ul>
+<li>
+<p><strong>Cold Starts</strong>: When a FaaS function gets called, what&rsquo;s really happening behind the scenes is a Docker container is spinning up, loading your code, and executing it. That spin up process isn&rsquo;t free, and can take on the order of seconds to be ready for use. However, if you call a function multiple times in short order, the container that the code originally ran in can be reused, removing the spin up cost.</p>
+</li>
+<li>
+<p><strong>CloudFormation Limits</strong>: Serverless uses CloudFormation behind the scenes for AWS deployments. Unfortunately, <a href=http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/cloudformation-limits.html>CloudFormation has limits</a>, and there&rsquo;s <a href=https://github.com/serverless/serverless/issues/2853>only so many functions you can add into a Serverless service</a> before you hit these limits. I ran into this with PYDT, and I&rsquo;ve had to resort to some ugly hacks to be able to fit more and more functions into the service. There&rsquo;s not much they can do to fix this without getting into split CloudFormation stacks, and I think that&rsquo;s pretty far down on their list at the moment.</p>
+</li>
+</ul>
+<p>I&rsquo;ve been kicking off a new project over the past couple of days, and because of those downsides I really didn&rsquo;t want to go down the Microservices path again. Also, using Angular2 has really made me love Typescript, and I wanted to use it for the backend. If I was going to do that, couldn&rsquo;t I get some cool benefits from having a strongly typed backend like auto-generation of Swagger schemas?</p>
+<p>Why yes, yes I could! I stumbled upon the <a href=https://github.com/lukeautry/tsoa>TSOA Framework</a>, which is suprisingly the only framework I could find that&rsquo;s using the benefits of Typescript to create an API backend that generates all the boilerplate for you. I forked their startup project, started playing around, and this is the result: <a href=https://github.com/mrosack/tsoa-serverless-example>https://github.com/mrosack/tsoa-serverless-example</a>. It&rsquo;s still super raw, but even in its initial state it&rsquo;s got a lot of cool benefits over doing things the standard Javascript/Microservice way:</p>
+<ul>
+<li>
+<p><strong>Automatically Generate swagger.json</strong>: This is the big carrot that TSOA waves out in front of you, and I love it. Keeping a swagger definition file up to date manually is a gigantic pain, and without eternal vigilance it can become useless pretty quickly.</p>
+</li>
+<li>
+<p><strong>Dependency Injection</strong>: This is another thing that comes out of the box with TSOA. It uses <a href=https://github.com/inversify/InversifyJS>InversifyJS</a> for it&rsquo;s IOC container, and adds some sweet syntatic sugar to help hook up all the injections for you.</p>
+</li>
+<li>
+<p><strong>No Cold Starts/Limits</strong>: The entire API is being deployed to a single Lambda function using <a href=http://docs.aws.amazon.com/apigateway/latest/developerguide/api-gateway-create-api-as-simple-proxy-for-http.html>API Gateway Proxy/ANY</a>, so you don&rsquo;t need to worry about cold starts for infrequently used functions or those pesky CloudFormation limits.</p>
+</li>
+</ul>
+<p><a href=https://github.com/mrosack/tsoa-serverless-example>Go take a look and let me know what you&rsquo;ll think!</a> I&rsquo;ll be updating things as I get deeper into my own project, but I think the value is pretty clear even now and I&rsquo;m really excited to keep playing with it!</p>
+</div></div>
+</div>
+</div>
+<div class=post style=display:grid;grid-template-columns:repeat(auto-fit,minmax(384px,1fr));grid-gap:1rem>
+<div>
+<h1 class=post-title>Social Links</h1>
+<div style=display:flex;justify-content:space-around;margin-bottom:50px>
+<a href=https://twitter.com/mike_rosack/ target=_blank><img alt="mike_rosack on twitter" src=/img/twitter.png></a>
+<a href=https://www.linkedin.com/in/mrosack/ target=_blank><img alt="mrosack on linked in" src=/img/linkedin.png></a>
+<a href=https://github.com/mrosack/ target=_blank><img alt="mrosack on github" src=/img/github.png></a>
+</div>
+<h1 class=post-title>RSS RSS Feed</h1>
+<div style=display:flex;justify-content:space-around;margin-bottom:50px>
+<a href=/index.xml><img alt="RSS feed" src=/img/feed.png></a>
+</div>
+<h1 class=post-title>Email Us!</h1>
+<p style=margin-bottom:50px>We'd love to hear from you! <a href=mailto:mike@rosacksoftwaresolutions.com>mike@rosacksoftwaresolutions.com</a></p>
+</div>
+<div>
+<h1 class=post-title><a href=https://twitter.com/mike_rosack>Follow me on Twitter</a></h1>
+<a class=twitter-timeline data-height=500 data-theme=dark href="https://twitter.com/mike_rosack?ref_src=twsrc%5Etfw">Tweets by mike_rosack</a> <script async src=https://platform.twitter.com/widgets.js></script>
+</div>
+</div>
+<footer class=footer>
+<div class=footer__inner>
+<div class=copyright>
+<span>© 2021 <a href=mailto:mike@rosacksoftwaresolutions.com>Rosack Software Solutions, LLC</a></span>
+<span>:: Powered by <a href=http://gohugo.io>Hugo</a>&nbsp;</span>
+<span>:: Theme made by <a href=https://twitter.com/panr>panr</a></span>
+</div>
+</div>
+<p style=text-align:center;font-size:9px>Icons from <a target=_blank href=https://icons8.com>icons8.com</a></p>
+</footer>
+<script src=https://www.rosacksoftwaresolutions.com/assets/main.js></script>
+<script src=https://www.rosacksoftwaresolutions.com/assets/prism.js></script>
+</div>
+</body>
+</html>
