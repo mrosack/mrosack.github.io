@@ -1,14 +1,12 @@
 +++
 title = "Developing a Hugo Site on Windows with Docker"
 date = "2021-12-25T12:07:32Z"
-author = ""
-authorTwitter = "" #do not include @
+author = "Mike Rosack"
+authorTwitter = "mike_rosack" #do not include @
 cover = ""
-tags = ["", ""]
-keywords = ["", ""]
-description = ""
-showFullContent = false
-readingTime = false
+tags = ["docker", "hugo", "windows", "bash"]
+keywords = ["docker", "hugo", "windows", "bash"]
+readingTime = true
 +++
 
 I've been wanting to retire the Wordpress site I threw up 4 years ago when I went independent pretty much from the moment I published it.  About a year and a half ago I finally got serious and started working on a replacement using [https://www.11ty.dev/](Eleventy), but I'm just not enough of a CSS guru to make something look great from scratch.  This Christmas break I decided to give it another go and took a look at [https://gohugo.io/](Hugo), which I had originally dismissed because I wanted something javascripty, but then I started using it and got from 0 to a pretty nice site in just a day or two.
@@ -18,6 +16,7 @@ That said, there were a couple hangups I had to get over, mostly because I'm a s
 {{< code language="javascript" >}}
 #!/bin/bash
 
+HUGO_VERSION=0.91.2
 platform="unix"
 
 if [ "$OSTYPE" = "msys" ] || [ "$OSTYPE" = "cygwin" ]; then
@@ -34,9 +33,9 @@ do
 done
 
 if [ $platform = "windows" ]; then
-    winpty bash -c "MSYS_NO_PATHCONV=1 docker run --rm -it -v $(pwd):/src -p 1313:1313 klakegg/hugo:0.91.2 $params"
+    winpty bash -c "MSYS_NO_PATHCONV=1 docker run --rm -it -v $(pwd):/src -p 1313:1313 klakegg/hugo:$HUGO_VERSION $params"
 else
-    docker run --rm -it -v $(pwd):/src -p 1313:1313 klakegg/hugo:0.91.2 $params
+    docker run --rm -it -v $(pwd):/src -p 1313:1313 klakegg/hugo:$HUGO_VERSION $params
 fi
 {{</code>}}
 
@@ -46,7 +45,4 @@ fi
 
 * **File watching broken:** On the computer I was developing on I had WSL 1, not 2, but I think this issue would be present on WSL 2 if you're developing on the Windows file system and not the Linux image - because the data is shared over a file share checking for file updates doesn't work.  Hugo has a workaround for this with the ```--poll``` option, so I added a special case to check if we're running the server and add the poll command automatically on windows.
 
-After all this, I could run the standard Hugo command line stuff like:
-
-* ```./hugo-docker.sh server```
-* ```./hugo-docker.sh new posts/hugo-windows-docker.md```
+After all this, I could run the standard Hugo command line stuff like ```./hugo-docker.sh server``` and ```./hugo-docker.sh new posts/hugo-windows-docker.md```, and I could also include the script in my github actions workflow to build and deploy the site.  Check out the full repo here if you're interested: https://github.com/mrosack/mrosack.github.io

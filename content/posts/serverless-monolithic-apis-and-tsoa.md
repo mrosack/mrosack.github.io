@@ -4,11 +4,9 @@ date = "2017-03-20T13:30:50Z"
 author = "Mike Rosack"
 authorTwitter = "mike_rosack" #do not include @
 cover = ""
-tags = ["", ""]
-keywords = ["", ""]
-description = ""
-showFullContent = false
-readingTime = false
+tags = ["serverless", "tsoa", "aws", "lambda"]
+keywords = ["serverless", "tsoa", "aws", "lambda"]
+readingTime = true
 aliases = ["/2017/03/20/serverless-monolithic-apis-and-tsoa"]
 +++
 

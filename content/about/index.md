@@ -1,5 +1,6 @@
 ---
 title: "About"
+aliases: ["/about-mike"]
 ---
 
 {{< image src="/img/mike.jpg" alt="Mike" position="right" style="width: 200px; margin-left: 10px; float:right; border-radius: 8px;" >}}

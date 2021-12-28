@@ -3,12 +3,9 @@ title = "Real Time Serverless Notifications with AWS IoT"
 date = "2017-08-26T11:11:13Z"
 author = "Mike Rosack"
 authorTwitter = "mike_rosack" #do not include @
-cover = ""
-tags = ["", ""]
+tags = ["serverless", "aws", "lambda", "iot", "pydt"]
 keywords = ["", ""]
-description = ""
-showFullContent = false
-readingTime = false
+readingTime = true
 aliases = ["/2017/08/26/real-time-serverless-notifications-with-aws-iot"]
 +++
 

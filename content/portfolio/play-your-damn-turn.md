@@ -1,5 +1,6 @@
 ---
 title: "Play Your Damn Turn"
+aliases: ["/portfolio/pydt"]
 ---
 
 {{< image src="/img/pydt.jpg" alt="Mike" position="right" style="width: 200px; margin-left: 10px; float:right; border-radius: 8px;" >}}
