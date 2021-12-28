@@ -1,0 +1,25 @@
+name: Deploy to Github Pages
+on:
+  push:
+    branches:
+      - master
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out
+        uses: actions/checkout@v2
+        with:
+          submodules: 'true'
+      - name: Build Hugo Site  
+        # https://github.com/actions/runner/issues/241
+        shell: 'script -q -e -c "bash --noprofile --norc -eo pipefail {0}"'
+        #run: |
+        #  ./hugo-docker.sh --minify -b https://www.rosacksoftwaresolutions.com
+        run: |
+          ./hugo-docker.sh --minify
+      - name: Deploy
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./public
