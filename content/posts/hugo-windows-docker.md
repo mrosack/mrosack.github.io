@@ -9,11 +9,11 @@ keywords = ["docker", "hugo", "windows", "bash"]
 readingTime = true
 +++
 
-I've been wanting to retire the Wordpress site I threw up 4 years ago when I went independent pretty much from the moment I published it.  About a year and a half ago I finally got serious and started working on a replacement using [https://www.11ty.dev/](Eleventy), but I'm just not enough of a CSS guru to make something look great from scratch.  This Christmas break I decided to give it another go and took a look at [https://gohugo.io/](Hugo), which I had originally dismissed because I wanted something javascripty, but then I started using it and got from 0 to a pretty nice site in just a day or two.
+I've been wanting to retire the Wordpress site I threw up 4 years ago when I went independent pretty much from the moment I published it.  About a year and a half ago I finally got serious and started working on a replacement using [Eleventy](https://www.11ty.dev/), but I'm just not enough of a CSS guru to make something look great from scratch.  This Christmas break I decided to give it another go and took a look at [Hugo](https://gohugo.io/), which I had originally dismissed because I wanted something javascripty, but then I started using it and got from 0 to a pretty nice site in just a day or two.
 
 That said, there were a couple hangups I had to get over, mostly because I'm a stubborn Windows user from my days working with .NET.  I didn't want to install the Hugo binary locally, and there's a nice [Hugo docker image](https://hub.docker.com/r/klakegg/hugo/), so I wanted to set up a dev env to run Hugo from docker.  That seems easy, but it never is on Windows.  Here's the final script I ended up with, but we'll talk through some issues I had:
 
-{{< code language="javascript" >}}
+{{< code language="bash" >}}
 #!/bin/bash
 
 HUGO_VERSION=0.91.2
