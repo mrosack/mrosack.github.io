@@ -14,10 +14,8 @@ jobs:
       - name: Build Hugo Site  
         # https://github.com/actions/runner/issues/241
         shell: 'script -q -e -c "bash --noprofile --norc -eo pipefail {0}"'
-        #run: |
-        #  ./hugo-docker.sh --minify -b https://www.rosacksoftwaresolutions.com
         run: |
-          ./hugo-docker.sh --minify
+          ./hugo-docker.sh --minify -b https://www.rosacksoftwaresolutions.com
       - name: Deploy
         uses: peaceiris/actions-gh-pages@v3
         with:
