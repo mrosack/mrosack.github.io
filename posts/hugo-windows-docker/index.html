@@ -64,7 +64,7 @@
 2021-12-25
 </span>
 <span class=post-author>:: Mike Rosack</span>
-<span class=post-reading-time>:: 3 min read (514 words)</span>
+<span class=post-reading-time>:: 3 min read (511 words)</span>
 </div>
 <span class=post-tags>
 #<a href=https://www.rosacksoftwaresolutions.com/tags/docker/>docker</a>&nbsp;
@@ -76,8 +76,8 @@
 <p>I&rsquo;ve been wanting to retire the Wordpress site I threw up 4 years ago when I went independent pretty much from the moment I published it. About a year and a half ago I finally got serious and started working on a replacement using <a href=https://www.11ty.dev/>Eleventy</a>, but I&rsquo;m just not enough of a CSS guru to make something look great from scratch. This Christmas break I decided to give it another go and took a look at <a href=https://gohugo.io/>Hugo</a>, which I had originally dismissed because I wanted something javascripty, but then I started using it and got from 0 to a pretty nice site in just a day or two.</p>
 <p>That said, there were a couple hangups I had to get over, mostly because I&rsquo;m a stubborn Windows user from my days working with .NET. I didn&rsquo;t want to install the Hugo binary locally, and there&rsquo;s a nice <a href=https://hub.docker.com/r/klakegg/hugo/>Hugo docker image</a>, so I wanted to set up a dev env to run Hugo from docker. That seems easy, but it never is on Windows. Here&rsquo;s the final script I ended up with, but we&rsquo;ll talk through some issues I had:</p>
 <div class=collapsable-code>
-<input id=639527814 type=checkbox>
-<label for=639527814>
+<input id=193265748 type=checkbox>
+<label for=193265748>
 <span class=collapsable-code__language>bash</span>
 <span class=collapsable-code__toggle data-label-expand=△ data-label-collapse=▽></span>
 </label>
@@ -115,7 +115,7 @@ fi
 <p><strong>General winpty issues:</strong> If you&rsquo;ve done much with Docker and Windows, you&rsquo;re probably familiar with this: <code>the input device is not a TTY. If you are using mintty, try prefixing the command with 'winpty'</code>. But it&rsquo;s never as easy as just adding winpty at the front - just following that suggestion caused the parameters not to be passed in correctly. I ended up using winpty to call a bash subprocess, passing in the entire command to run.</p>
 </li>
 <li>
-<p><strong>File watching broken:</strong> On the computer I was developing on I had WSL 1, not 2, but I think this issue would be present on WSL 2 if you&rsquo;re developing on the Windows file system and not the Linux image - because the data is shared over a file share checking for file updates doesn&rsquo;t work. Hugo has a workaround for this with the <code>--poll</code> option, so I added a special case to check if we&rsquo;re running the server and add the poll command automatically on windows.</p>
+<p><strong>File watching broken:</strong> The computer I was developing on had WSL 1, not 2, but I think this issue would be present on WSL 2 if you&rsquo;re developing on the Windows file system and not the Linux image - because the data is shared over a file share Hugo doesn&rsquo;t see file updates. Hugo has a workaround for this with the <code>--poll</code> option, so I added a special case to check if we&rsquo;re running the server on Windows and add the poll command automatically.</p>
 </li>
 </ul>
 <p>After all this, I could run the standard Hugo command line stuff like <code>./hugo-docker.sh server</code> and <code>./hugo-docker.sh new posts/hugo-windows-docker.md</code>, and I could also include the script in my github actions workflow to build and deploy the site. Check out the full repo here if you&rsquo;re interested: <a href=https://github.com/mrosack/mrosack.github.io>https://github.com/mrosack/mrosack.github.io</a></p>
@@ -143,7 +143,7 @@ fi
 </div>
 </div>
 <footer class=footer>
-<div class=footer__inner>
+<div class=footer__inner style=margin:auto>
 <div class=copyright>
 <span>© 2021 <a href=mailto:mike@rosacksoftwaresolutions.com>Rosack Software Solutions, LLC</a></span>
 <span>:: Powered by <a href=http://gohugo.io>Hugo</a>&nbsp;</span>
