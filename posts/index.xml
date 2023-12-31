@@ -1,8 +1,392 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Rosack Software Solutions</title><link>https://www.rosacksoftwaresolutions.com/posts/</link><description>Recent content on Rosack Software Solutions</description><generator>Hugo -- gohugo.io</generator><language>en-us</language><lastBuildDate>Sat, 25 Dec 2021 12:07:32 +0000</lastBuildDate><atom:link href="https://www.rosacksoftwaresolutions.com/posts/index.xml" rel="self" type="application/rss+xml"/><item><title>Developing a Hugo Site on Windows with Docker</title><link>https://www.rosacksoftwaresolutions.com/posts/hugo-windows-docker/</link><pubDate>Sat, 25 Dec 2021 12:07:32 +0000</pubDate><guid>https://www.rosacksoftwaresolutions.com/posts/hugo-windows-docker/</guid><description>I&amp;rsquo;ve been wanting to retire the Wordpress site I threw up 4 years ago when I went independent pretty much from the moment I published it. About a year and a half ago I finally got serious and started working on a replacement using Eleventy, but I&amp;rsquo;m just not enough of a CSS guru to make something look great from scratch. This Christmas break I decided to give it another go and took a look at Hugo, which I had originally dismissed because I wanted something javascripty, but then I started using it and got from 0 to a pretty nice site in just a day or two.</description><content>&lt;p>I&amp;rsquo;ve been wanting to retire the Wordpress site I threw up 4 years ago when I went independent pretty much from the moment I published it. About a year and a half ago I finally got serious and started working on a replacement using &lt;a href="https://www.11ty.dev/">Eleventy&lt;/a>, but I&amp;rsquo;m just not enough of a CSS guru to make something look great from scratch. This Christmas break I decided to give it another go and took a look at &lt;a href="https://gohugo.io/">Hugo&lt;/a>, which I had originally dismissed because I wanted something javascripty, but then I started using it and got from 0 to a pretty nice site in just a day or two.&lt;/p>
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Rosack Software Solutions</title><link>https://www.rosacksoftwaresolutions.com/posts/</link><description>Recent content on Rosack Software Solutions</description><generator>Hugo -- gohugo.io</generator><language>en-us</language><lastBuildDate>Sat, 30 Dec 2023 12:07:32 +0000</lastBuildDate><atom:link href="https://www.rosacksoftwaresolutions.com/posts/index.xml" rel="self" type="application/rss+xml"/><item><title>Searching Family Photos With Azure AI Search</title><link>https://www.rosacksoftwaresolutions.com/posts/azure-ai-image-search/</link><pubDate>Sat, 30 Dec 2023 12:07:32 +0000</pubDate><guid>https://www.rosacksoftwaresolutions.com/posts/azure-ai-image-search/</guid><description>My son Calvin is about 6 years old now, and ever since he&amp;rsquo;s born we&amp;rsquo;ve had a messaging group between the whole family where we post updates and pictures, and I&amp;rsquo;ve been archiving that to a website that isn&amp;rsquo;t public for obvious reasons. Anyway, we&amp;rsquo;ve got a couple thousand images in there, and the thread is 6 years old, so finding stuff is becoming a pain. I could search on the messages in the thread pretty easily, but I wanted some way to search images as well.</description><content>&lt;p>My son Calvin is about 6 years old now, and ever since he&amp;rsquo;s born we&amp;rsquo;ve had a messaging group between the whole family where we post updates and pictures, and I&amp;rsquo;ve been archiving that to a website that isn&amp;rsquo;t public for obvious reasons. Anyway, we&amp;rsquo;ve got a couple thousand images in there, and the thread is 6 years old, so finding stuff is becoming a pain. I could search on the messages in the thread pretty easily, but I wanted some way to search images as well. I was hoping ChatGPT or something could just do this for me but it doesn&amp;rsquo;t seem like we&amp;rsquo;re quite there yet. Thankfully I&amp;rsquo;ve got $150/month of credits in Azure that still seem to replenish every month for some reason, and it turns out Azure&amp;rsquo;s got some nifty tools to do this.&lt;/p>
+&lt;p>That said, it&amp;rsquo;s not really obvious how to do it, and I didn&amp;rsquo;t really see a straightforward guide, so I&amp;rsquo;m writing down what I did here. It&amp;rsquo;s pretty easy once you know all the secret JSON configuration to get everything working.&lt;/p>
+&lt;h2 id="create-azure-ai-services-account">Create Azure AI Services Account&lt;/h2>
+&lt;p>For all of this, you&amp;rsquo;ll need an &amp;ldquo;Azure AI services&amp;rdquo; account created. You can mess around with this a bit in the free tiers, but if you&amp;rsquo;re doing hundreds/thousands of images you&amp;rsquo;ll need this plan to get billed. And you&amp;rsquo;ll definitely get billed - I got charged about 60 bucks for processing about 3500 images, so be careful what you throw at this. All you really need to do is create the account, we&amp;rsquo;ll do the rest elsewhere, this just needs to exist.&lt;/p>
+&lt;h2 id="create-azure-ai-search-service">Create Azure AI Search Service&lt;/h2>
+&lt;p>The meat of the setup is in Azure AI Search. You should only need to use the free tier here, 50 MB is quite a bit of space, I used about 6.5 MB for those 3500 pictures.&lt;/p>
+&lt;h3 id="data-source">Data Source&lt;/h3>
+&lt;p>The first thing you need to do once your search service is set up is to create a data source. I had all of my images in blob storage in Azure so I just created a datasource pointing at that storage account.&lt;/p>
+&lt;h3 id="index">Index&lt;/h3>
+&lt;p>The next 3 steps all sorta bleed together, so it can be confusing what to set up first. The index logically should be set up first because you need to define all the fields where data should be stored, but how do you know what fields to create? Hopefully you would figure out some google query that would take you to this page: &lt;a href="https://learn.microsoft.com/en-us/azure/search/cognitive-search-skill-image-analysis">https://learn.microsoft.com/en-us/azure/search/cognitive-search-skill-image-analysis&lt;/a>. You should take a look at that page, as there&amp;rsquo;s some stuff like Faces and Objects that I didn&amp;rsquo;t include in my index, but here&amp;rsquo;s the JSON I wound up using. You can use &amp;ldquo;Add index (JSON)&amp;rdquo; and paste this in:&lt;/p>
+&lt;div class="collapsable-code">
+&lt;input id="872369145" type="checkbox" />
+&lt;label for="872369145">
+&lt;span class="collapsable-code__language">json&lt;/span>
+&lt;span class="collapsable-code__toggle" data-label-expand="△" data-label-collapse="▽">&lt;/span>
+&lt;/label>
+&lt;pre class="language-json" >&lt;code>
+{
+&amp;#34;name&amp;#34;: &amp;#34;image-analysis&amp;#34;,
+&amp;#34;defaultScoringProfile&amp;#34;: null,
+&amp;#34;fields&amp;#34;: [
+{
+&amp;#34;name&amp;#34;: &amp;#34;metadata_storage_name&amp;#34;,
+&amp;#34;type&amp;#34;: &amp;#34;Edm.String&amp;#34;,
+&amp;#34;searchable&amp;#34;: true,
+&amp;#34;filterable&amp;#34;: false,
+&amp;#34;facetable&amp;#34;: false,
+&amp;#34;key&amp;#34;: true,
+&amp;#34;sortable&amp;#34;: true
+},
+{
+&amp;#34;name&amp;#34;: &amp;#34;metadata_storage_path&amp;#34;,
+&amp;#34;type&amp;#34;: &amp;#34;Edm.String&amp;#34;,
+&amp;#34;searchable&amp;#34;: true,
+&amp;#34;filterable&amp;#34;: false,
+&amp;#34;facetable&amp;#34;: false,
+&amp;#34;sortable&amp;#34;: true
+},
+{
+&amp;#34;name&amp;#34;: &amp;#34;content&amp;#34;,
+&amp;#34;type&amp;#34;: &amp;#34;Edm.String&amp;#34;,
+&amp;#34;sortable&amp;#34;: false,
+&amp;#34;searchable&amp;#34;: true,
+&amp;#34;filterable&amp;#34;: false,
+&amp;#34;facetable&amp;#34;: false
+},
+{
+&amp;#34;name&amp;#34;: &amp;#34;brands&amp;#34;,
+&amp;#34;type&amp;#34;: &amp;#34;Collection(Edm.ComplexType)&amp;#34;,
+&amp;#34;fields&amp;#34;: [
+{
+&amp;#34;name&amp;#34;: &amp;#34;name&amp;#34;,
+&amp;#34;type&amp;#34;: &amp;#34;Edm.String&amp;#34;,
+&amp;#34;searchable&amp;#34;: true,
+&amp;#34;filterable&amp;#34;: false,
+&amp;#34;facetable&amp;#34;: false
+},
+{
+&amp;#34;name&amp;#34;: &amp;#34;confidence&amp;#34;,
+&amp;#34;type&amp;#34;: &amp;#34;Edm.Double&amp;#34;,
+&amp;#34;searchable&amp;#34;: false,
+&amp;#34;filterable&amp;#34;: false,
+&amp;#34;facetable&amp;#34;: false
+},
+{
+&amp;#34;name&amp;#34;: &amp;#34;rectangle&amp;#34;,
+&amp;#34;type&amp;#34;: &amp;#34;Edm.ComplexType&amp;#34;,
+&amp;#34;fields&amp;#34;: [
+{
+&amp;#34;name&amp;#34;: &amp;#34;x&amp;#34;,
+&amp;#34;type&amp;#34;: &amp;#34;Edm.Int32&amp;#34;,
+&amp;#34;searchable&amp;#34;: false,
+&amp;#34;filterable&amp;#34;: false,
+&amp;#34;facetable&amp;#34;: false
+},
+{
+&amp;#34;name&amp;#34;: &amp;#34;y&amp;#34;,
+&amp;#34;type&amp;#34;: &amp;#34;Edm.Int32&amp;#34;,
+&amp;#34;searchable&amp;#34;: false,
+&amp;#34;filterable&amp;#34;: false,
+&amp;#34;facetable&amp;#34;: false
+},
+{
+&amp;#34;name&amp;#34;: &amp;#34;w&amp;#34;,
+&amp;#34;type&amp;#34;: &amp;#34;Edm.Int32&amp;#34;,
+&amp;#34;searchable&amp;#34;: false,
+&amp;#34;filterable&amp;#34;: false,
+&amp;#34;facetable&amp;#34;: false
+},
+{
+&amp;#34;name&amp;#34;: &amp;#34;h&amp;#34;,
+&amp;#34;type&amp;#34;: &amp;#34;Edm.Int32&amp;#34;,
+&amp;#34;searchable&amp;#34;: false,
+&amp;#34;filterable&amp;#34;: false,
+&amp;#34;facetable&amp;#34;: false
+}
+]
+}
+]
+},
+{
+&amp;#34;name&amp;#34;: &amp;#34;categories&amp;#34;,
+&amp;#34;type&amp;#34;: &amp;#34;Collection(Edm.ComplexType)&amp;#34;,
+&amp;#34;fields&amp;#34;: [
+{
+&amp;#34;name&amp;#34;: &amp;#34;name&amp;#34;,
+&amp;#34;type&amp;#34;: &amp;#34;Edm.String&amp;#34;,
+&amp;#34;searchable&amp;#34;: true,
+&amp;#34;filterable&amp;#34;: false,
+&amp;#34;facetable&amp;#34;: false
+},
+{
+&amp;#34;name&amp;#34;: &amp;#34;score&amp;#34;,
+&amp;#34;type&amp;#34;: &amp;#34;Edm.Double&amp;#34;,
+&amp;#34;searchable&amp;#34;: false,
+&amp;#34;filterable&amp;#34;: false,
+&amp;#34;facetable&amp;#34;: false
+},
+{
+&amp;#34;name&amp;#34;: &amp;#34;detail&amp;#34;,
+&amp;#34;type&amp;#34;: &amp;#34;Edm.ComplexType&amp;#34;,
+&amp;#34;fields&amp;#34;: [
+{
+&amp;#34;name&amp;#34;: &amp;#34;celebrities&amp;#34;,
+&amp;#34;type&amp;#34;: &amp;#34;Collection(Edm.ComplexType)&amp;#34;,
+&amp;#34;fields&amp;#34;: [
+{
+&amp;#34;name&amp;#34;: &amp;#34;name&amp;#34;,
+&amp;#34;type&amp;#34;: &amp;#34;Edm.String&amp;#34;,
+&amp;#34;searchable&amp;#34;: true,
+&amp;#34;filterable&amp;#34;: false,
+&amp;#34;facetable&amp;#34;: false
+},
+{
+&amp;#34;name&amp;#34;: &amp;#34;faceBoundingBox&amp;#34;,
+&amp;#34;type&amp;#34;: &amp;#34;Collection(Edm.ComplexType)&amp;#34;,
+&amp;#34;fields&amp;#34;: [
+{
+&amp;#34;name&amp;#34;: &amp;#34;x&amp;#34;,
+&amp;#34;type&amp;#34;: &amp;#34;Edm.Int32&amp;#34;,
+&amp;#34;searchable&amp;#34;: false,
+&amp;#34;filterable&amp;#34;: false,
+&amp;#34;facetable&amp;#34;: false
+},
+{
+&amp;#34;name&amp;#34;: &amp;#34;y&amp;#34;,
+&amp;#34;type&amp;#34;: &amp;#34;Edm.Int32&amp;#34;,
+&amp;#34;searchable&amp;#34;: false,
+&amp;#34;filterable&amp;#34;: false,
+&amp;#34;facetable&amp;#34;: false
+}
+]
+},
+{
+&amp;#34;name&amp;#34;: &amp;#34;confidence&amp;#34;,
+&amp;#34;type&amp;#34;: &amp;#34;Edm.Double&amp;#34;,
+&amp;#34;searchable&amp;#34;: false,
+&amp;#34;filterable&amp;#34;: false,
+&amp;#34;facetable&amp;#34;: false
+}
+]
+},
+{
+&amp;#34;name&amp;#34;: &amp;#34;landmarks&amp;#34;,
+&amp;#34;type&amp;#34;: &amp;#34;Collection(Edm.ComplexType)&amp;#34;,
+&amp;#34;fields&amp;#34;: [
+{
+&amp;#34;name&amp;#34;: &amp;#34;name&amp;#34;,
+&amp;#34;type&amp;#34;: &amp;#34;Edm.String&amp;#34;,
+&amp;#34;searchable&amp;#34;: true,
+&amp;#34;filterable&amp;#34;: false,
+&amp;#34;facetable&amp;#34;: false
+},
+{
+&amp;#34;name&amp;#34;: &amp;#34;confidence&amp;#34;,
+&amp;#34;type&amp;#34;: &amp;#34;Edm.Double&amp;#34;,
+&amp;#34;searchable&amp;#34;: false,
+&amp;#34;filterable&amp;#34;: false,
+&amp;#34;facetable&amp;#34;: false
+}
+]
+}
+]
+}
+]
+},
+{
+&amp;#34;name&amp;#34;: &amp;#34;description&amp;#34;,
+&amp;#34;type&amp;#34;: &amp;#34;Collection(Edm.ComplexType)&amp;#34;,
+&amp;#34;fields&amp;#34;: [
+{
+&amp;#34;name&amp;#34;: &amp;#34;tags&amp;#34;,
+&amp;#34;type&amp;#34;: &amp;#34;Collection(Edm.String)&amp;#34;,
+&amp;#34;searchable&amp;#34;: true,
+&amp;#34;filterable&amp;#34;: false,
+&amp;#34;facetable&amp;#34;: false
+},
+{
+&amp;#34;name&amp;#34;: &amp;#34;captions&amp;#34;,
+&amp;#34;type&amp;#34;: &amp;#34;Collection(Edm.ComplexType)&amp;#34;,
+&amp;#34;fields&amp;#34;: [
+{
+&amp;#34;name&amp;#34;: &amp;#34;text&amp;#34;,
+&amp;#34;type&amp;#34;: &amp;#34;Edm.String&amp;#34;,
+&amp;#34;searchable&amp;#34;: true,
+&amp;#34;filterable&amp;#34;: false,
+&amp;#34;facetable&amp;#34;: false
+},
+{
+&amp;#34;name&amp;#34;: &amp;#34;confidence&amp;#34;,
+&amp;#34;type&amp;#34;: &amp;#34;Edm.Double&amp;#34;,
+&amp;#34;searchable&amp;#34;: false,
+&amp;#34;filterable&amp;#34;: false,
+&amp;#34;facetable&amp;#34;: false
+}
+]
+}
+]
+},
+{
+&amp;#34;name&amp;#34;: &amp;#34;tags&amp;#34;,
+&amp;#34;type&amp;#34;: &amp;#34;Collection(Edm.ComplexType)&amp;#34;,
+&amp;#34;fields&amp;#34;: [
+{
+&amp;#34;name&amp;#34;: &amp;#34;name&amp;#34;,
+&amp;#34;type&amp;#34;: &amp;#34;Edm.String&amp;#34;,
+&amp;#34;searchable&amp;#34;: true,
+&amp;#34;filterable&amp;#34;: false,
+&amp;#34;facetable&amp;#34;: false
+},
+{
+&amp;#34;name&amp;#34;: &amp;#34;hint&amp;#34;,
+&amp;#34;type&amp;#34;: &amp;#34;Edm.String&amp;#34;,
+&amp;#34;searchable&amp;#34;: true,
+&amp;#34;filterable&amp;#34;: false,
+&amp;#34;facetable&amp;#34;: false
+},
+{
+&amp;#34;name&amp;#34;: &amp;#34;confidence&amp;#34;,
+&amp;#34;type&amp;#34;: &amp;#34;Edm.Double&amp;#34;,
+&amp;#34;searchable&amp;#34;: false,
+&amp;#34;filterable&amp;#34;: false,
+&amp;#34;facetable&amp;#34;: false
+}
+]
+}
+],
+&amp;#34;corsOptions&amp;#34;: {
+&amp;#34;allowedOrigins&amp;#34;: [
+&amp;#34;*&amp;#34;
+],
+&amp;#34;maxAgeInSeconds&amp;#34;: 300
+}
+}
+&lt;/code>&lt;/pre>
+&lt;/div>
+&lt;p>Note the corsOptions at the bottom - I have a website that&amp;rsquo;s going to be querying this index directly so I need CORS to be able to hit it from a browser. You could obviously narrow the origins down if you&amp;rsquo;re paranoid about it.&lt;/p>
+&lt;h3 id="skillset">Skillset&lt;/h3>
+&lt;p>After we&amp;rsquo;ve got the index created, we need to create a skillset, which will tell the Azure AI what to do with our data. We want Azure AI to look at our images and describe/tag them so we can search them, so let&amp;rsquo;s set that up. Unfortunately the default JSON they give you in the portal isn&amp;rsquo;t anywhere close to what you need, but again I&amp;rsquo;ve got a good example here:&lt;/p>
+&lt;div class="collapsable-code">
+&lt;input id="856127934" type="checkbox" />
+&lt;label for="856127934">
+&lt;span class="collapsable-code__language">json&lt;/span>
+&lt;span class="collapsable-code__toggle" data-label-expand="△" data-label-collapse="▽">&lt;/span>
+&lt;/label>
+&lt;pre class="language-json" >&lt;code>
+{
+&amp;#34;name&amp;#34;: &amp;#34;image-analysis&amp;#34;,
+&amp;#34;description&amp;#34;: &amp;#34;&amp;#34;,
+&amp;#34;skills&amp;#34;: [
+{
+&amp;#34;@odata.type&amp;#34;: &amp;#34;#Microsoft.Skills.Vision.ImageAnalysisSkill&amp;#34;,
+&amp;#34;name&amp;#34;: &amp;#34;#1&amp;#34;,
+&amp;#34;description&amp;#34;: &amp;#34;&amp;#34;,
+&amp;#34;context&amp;#34;: &amp;#34;/document/normalized_images/*&amp;#34;,
+&amp;#34;defaultLanguageCode&amp;#34;: &amp;#34;en&amp;#34;,
+&amp;#34;visualFeatures&amp;#34;: [
+&amp;#34;Brands&amp;#34;,
+&amp;#34;Categories&amp;#34;,
+&amp;#34;Description&amp;#34;,
+&amp;#34;Tags&amp;#34;
+],
+&amp;#34;details&amp;#34;: [
+&amp;#34;Landmarks&amp;#34;
+],
+&amp;#34;inputs&amp;#34;: [
+{
+&amp;#34;name&amp;#34;: &amp;#34;image&amp;#34;,
+&amp;#34;source&amp;#34;: &amp;#34;/document/normalized_images/*&amp;#34;
+}
+],
+&amp;#34;outputs&amp;#34;: [
+{
+&amp;#34;name&amp;#34;: &amp;#34;brands&amp;#34;
+},
+{
+&amp;#34;name&amp;#34;: &amp;#34;categories&amp;#34;
+},
+{
+&amp;#34;name&amp;#34;: &amp;#34;description&amp;#34;
+},
+{
+&amp;#34;name&amp;#34;: &amp;#34;tags&amp;#34;
+}
+]
+}
+],
+&amp;#34;cognitiveServices&amp;#34;: {
+&amp;#34;@odata.type&amp;#34;: &amp;#34;#Microsoft.Azure.Search.DefaultCognitiveServices&amp;#34;,
+&amp;#34;description&amp;#34;: null
+},
+&amp;#34;knowledgeStore&amp;#34;: null,
+&amp;#34;indexProjections&amp;#34;: null,
+&amp;#34;encryptionKey&amp;#34;: null
+}
+&lt;/code>&lt;/pre>
+&lt;/div>
+&lt;p>To summarize what&amp;rsquo;s going on here: The skill is going to receive a normalized image from the indexer (that we&amp;rsquo;ll configure in the next step) as an input, search the image for Brands, Categories, Descriptions and Tags and spit those out as outputs.&lt;/p>
+&lt;h3 id="indexer">Indexer&lt;/h3>
+&lt;p>The indexer ties everything together - it takes data from the datasource, passes it to the skill, and writes the results to the index for searching. My indexer config looked like this:&lt;/p>
+&lt;div class="collapsable-code">
+&lt;input id="621745839" type="checkbox" />
+&lt;label for="621745839">
+&lt;span class="collapsable-code__language">json&lt;/span>
+&lt;span class="collapsable-code__toggle" data-label-expand="△" data-label-collapse="▽">&lt;/span>
+&lt;/label>
+&lt;pre class="language-json" >&lt;code>
+{
+&amp;#34;name&amp;#34;: &amp;#34;image-analysis&amp;#34;,
+&amp;#34;description&amp;#34;: null,
+&amp;#34;dataSourceName&amp;#34;: &amp;#34;imageanalysis&amp;#34;,
+&amp;#34;skillsetName&amp;#34;: &amp;#34;image-analysis&amp;#34;,
+&amp;#34;targetIndexName&amp;#34;: &amp;#34;image-analysis&amp;#34;,
+&amp;#34;disabled&amp;#34;: null,
+&amp;#34;schedule&amp;#34;: null,
+&amp;#34;parameters&amp;#34;: {
+&amp;#34;batchSize&amp;#34;: null,
+&amp;#34;maxFailedItems&amp;#34;: null,
+&amp;#34;maxFailedItemsPerBatch&amp;#34;: null,
+&amp;#34;base64EncodeKeys&amp;#34;: true,
+&amp;#34;configuration&amp;#34;: {
+&amp;#34;indexedFileNameExtensions&amp;#34;: &amp;#34;.jpg,.jpeg,.gif,.png&amp;#34;,
+&amp;#34;imageAction&amp;#34;: &amp;#34;generateNormalizedImages&amp;#34;
+}
+},
+&amp;#34;fieldMappings&amp;#34;: [],
+&amp;#34;outputFieldMappings&amp;#34;: [
+{
+&amp;#34;sourceFieldName&amp;#34;: &amp;#34;/document/normalized_images/*/brands/*&amp;#34;,
+&amp;#34;targetFieldName&amp;#34;: &amp;#34;brands&amp;#34;
+},
+{
+&amp;#34;sourceFieldName&amp;#34;: &amp;#34;/document/normalized_images/*/categories/*&amp;#34;,
+&amp;#34;targetFieldName&amp;#34;: &amp;#34;categories&amp;#34;
+},
+{
+&amp;#34;sourceFieldName&amp;#34;: &amp;#34;/document/normalized_images/*/description&amp;#34;,
+&amp;#34;targetFieldName&amp;#34;: &amp;#34;description&amp;#34;
+},
+{
+&amp;#34;sourceFieldName&amp;#34;: &amp;#34;/document/normalized_images/*/tags/*&amp;#34;,
+&amp;#34;targetFieldName&amp;#34;: &amp;#34;tags&amp;#34;
+}
+],
+&amp;#34;cache&amp;#34;: null,
+&amp;#34;encryptionKey&amp;#34;: null
+}
+&lt;/code>&lt;/pre>
+&lt;/div>
+&lt;p>Some critical stuff to understand in here:&lt;/p>
+&lt;ul>
+&lt;li>&lt;strong>base64EncodeKeys&lt;/strong>: The filename of the image is used as the key in our index, and we can&amp;rsquo;t have special characters in the key field. This encodes the filename in base64 so it&amp;rsquo;s guaranteed to be safe as a key.&lt;/li>
+&lt;li>&lt;strong>indexedFileNameExtensions&lt;/strong>: The extensions of files we want to analyze - just images.&lt;/li>
+&lt;li>&lt;strong>imageAction&lt;/strong>: We need to run generateNormalizedImages to create the standard images that we pass into the skill for analysis.&lt;/li>
+&lt;/ul>
+&lt;p>Once you hit save here, it&amp;rsquo;ll automatically run your indexer, so make sure you&amp;rsquo;re ready to be billed!&lt;/p>
+&lt;h2 id="results">Results&lt;/h2>
+&lt;p>Hopefully everything went well, it&amp;rsquo;ll probably take a while to churn through all of the images if you&amp;rsquo;ve got a bit. But when it&amp;rsquo;s done you&amp;rsquo;ll have data about your images ready to be searched in your index! Just go to your index in the portal and type something in the search field and see what comes up. The search field is pretty smart and covers all the fields in your documents, so you should have pretty good results right off the bat. If you need to customize your search and integrate it into a webapp or something, this doc was really helpful: &lt;a href="https://learn.microsoft.com/en-us/rest/api/searchservice/search-documents">https://learn.microsoft.com/en-us/rest/api/searchservice/search-documents&lt;/a>&lt;/p>
+&lt;p>A couple highlights:&lt;/p>
+&lt;ul>
+&lt;li>&lt;strong>searchMode&lt;/strong>: The options here are &amp;ldquo;any&amp;rdquo; or &amp;ldquo;all&amp;rdquo; - by default it&amp;rsquo;s any, which works like ORing your search terms. if you want AND, use &amp;ldquo;all&amp;rdquo;.&lt;/li>
+&lt;li>&lt;strong>$top&lt;/strong>: If you don&amp;rsquo;t want to page and just want a ton of results, you can set this up to 1000.&lt;/li>
+&lt;/ul>
+&lt;h2 id="next-steps">Next Steps&lt;/h2>
+&lt;p>I didn&amp;rsquo;t do any face detection here, because all it does is locate faces in images and not identify them (unless they&amp;rsquo;re &amp;ldquo;Celebrities&amp;rdquo;). I&amp;rsquo;d like to be able to train something to identify family members in pictures and include them as searchable keys. Microsoft does have a Face API service that can do this, but how to get the face detections in the search results? Fortunately, AI Search seems to support &amp;ldquo;custom skills&amp;rdquo; (see &lt;a href="https://github.com/Azure-Samples/azure-search-power-skills)">https://github.com/Azure-Samples/azure-search-power-skills)&lt;/a>, so I think I can write a bridge skill that will search for known faces in Face API and return those as keys to be included in the index. Maybe I&amp;rsquo;ll have another post this year with that&amp;hellip;&lt;/p></content></item><item><title>Developing a Hugo Site on Windows with Docker</title><link>https://www.rosacksoftwaresolutions.com/posts/hugo-windows-docker/</link><pubDate>Sat, 25 Dec 2021 12:07:32 +0000</pubDate><guid>https://www.rosacksoftwaresolutions.com/posts/hugo-windows-docker/</guid><description>I&amp;rsquo;ve been wanting to retire the Wordpress site I threw up 4 years ago when I went independent pretty much from the moment I published it. About a year and a half ago I finally got serious and started working on a replacement using Eleventy, but I&amp;rsquo;m just not enough of a CSS guru to make something look great from scratch. This Christmas break I decided to give it another go and took a look at Hugo, which I had originally dismissed because I wanted something javascripty, but then I started using it and got from 0 to a pretty nice site in just a day or two.</description><content>&lt;p>I&amp;rsquo;ve been wanting to retire the Wordpress site I threw up 4 years ago when I went independent pretty much from the moment I published it. About a year and a half ago I finally got serious and started working on a replacement using &lt;a href="https://www.11ty.dev/">Eleventy&lt;/a>, but I&amp;rsquo;m just not enough of a CSS guru to make something look great from scratch. This Christmas break I decided to give it another go and took a look at &lt;a href="https://gohugo.io/">Hugo&lt;/a>, which I had originally dismissed because I wanted something javascripty, but then I started using it and got from 0 to a pretty nice site in just a day or two.&lt;/p>
 &lt;p>That said, there were a couple hangups I had to get over, mostly because I&amp;rsquo;m a stubborn Windows user from my days working with .NET. I didn&amp;rsquo;t want to install the Hugo binary locally, and there&amp;rsquo;s a nice &lt;a href="https://hub.docker.com/r/klakegg/hugo/">Hugo docker image&lt;/a>, so I wanted to set up a dev env to run Hugo from docker. That seems easy, but it never is on Windows. Here&amp;rsquo;s the final script I ended up with, but we&amp;rsquo;ll talk through some issues I had:&lt;/p>
 &lt;div class="collapsable-code">
-&lt;input id="947158263" type="checkbox" />
-&lt;label for="947158263">
+&lt;input id="635419872" type="checkbox" />
+&lt;label for="635419872">
 &lt;span class="collapsable-code__language">bash&lt;/span>
 &lt;span class="collapsable-code__toggle" data-label-expand="△" data-label-collapse="▽">&lt;/span>
 &lt;/label>
@@ -50,8 +434,8 @@ fi
 &lt;h2 id="client-side">Client Side&lt;/h2>
 &lt;p>On the client, we&amp;rsquo;re using &lt;a href="https://github.com/aws/aws-iot-device-sdk-js">aws-iot-device-sdk-js&lt;/a>, a library that wraps an MQTT client and adds additional AWS IoT-specific functionality. It&amp;rsquo;s not too hard to set things up, here&amp;rsquo;s all the code it takes (&lt;a href="https://github.com/aws/aws-iot-device-sdk-js">starting at line 114 here&lt;/a>):&lt;/p>
 &lt;div class="collapsable-code">
-&lt;input id="986145273" type="checkbox" />
-&lt;label for="986145273">
+&lt;input id="537692481" type="checkbox" />
+&lt;label for="537692481">
 &lt;span class="collapsable-code__language">javascript&lt;/span>
 &lt;span class="collapsable-code__toggle" data-label-expand="△" data-label-collapse="▽">&lt;/span>
 &lt;/label>
@@ -95,8 +479,8 @@ this.loadGames();
 &lt;h2 id="server-side">Server Side&lt;/h2>
 &lt;p>The server side is even easier, believe it or not. We just use the IotData class in the aws-sdk (&lt;a href="https://github.com/pydt/api/blob/00a352b0b845b8ce097290142d122458c5046817/functions/sns/userTurnNotification.js">see the userTurnNotification handler in the API&lt;/a>):&lt;/p>
 &lt;div class="collapsable-code">
-&lt;input id="829514367" type="checkbox" />
-&lt;label for="829514367">
+&lt;input id="563978241" type="checkbox" />
+&lt;label for="563978241">
 &lt;span class="collapsable-code__language">javascript&lt;/span>
 &lt;span class="collapsable-code__toggle" data-label-expand="△" data-label-collapse="▽">&lt;/span>
 &lt;/label>

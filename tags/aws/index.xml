@@ -9,8 +9,8 @@
 &lt;h2 id="client-side">Client Side&lt;/h2>
 &lt;p>On the client, we&amp;rsquo;re using &lt;a href="https://github.com/aws/aws-iot-device-sdk-js">aws-iot-device-sdk-js&lt;/a>, a library that wraps an MQTT client and adds additional AWS IoT-specific functionality. It&amp;rsquo;s not too hard to set things up, here&amp;rsquo;s all the code it takes (&lt;a href="https://github.com/aws/aws-iot-device-sdk-js">starting at line 114 here&lt;/a>):&lt;/p>
 &lt;div class="collapsable-code">
-&lt;input id="986145273" type="checkbox" />
-&lt;label for="986145273">
+&lt;input id="537692481" type="checkbox" />
+&lt;label for="537692481">
 &lt;span class="collapsable-code__language">javascript&lt;/span>
 &lt;span class="collapsable-code__toggle" data-label-expand="△" data-label-collapse="▽">&lt;/span>
 &lt;/label>
@@ -54,8 +54,8 @@ this.loadGames();
 &lt;h2 id="server-side">Server Side&lt;/h2>
 &lt;p>The server side is even easier, believe it or not. We just use the IotData class in the aws-sdk (&lt;a href="https://github.com/pydt/api/blob/00a352b0b845b8ce097290142d122458c5046817/functions/sns/userTurnNotification.js">see the userTurnNotification handler in the API&lt;/a>):&lt;/p>
 &lt;div class="collapsable-code">
-&lt;input id="829514367" type="checkbox" />
-&lt;label for="829514367">
+&lt;input id="563978241" type="checkbox" />
+&lt;label for="563978241">
 &lt;span class="collapsable-code__language">javascript&lt;/span>
 &lt;span class="collapsable-code__toggle" data-label-expand="△" data-label-collapse="▽">&lt;/span>
 &lt;/label>
