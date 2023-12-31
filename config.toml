@@ -23,3 +23,8 @@ theme = 'terminal'
     name = 'About Mike'
     url = '/about'
     weight = 3
+[[menu.main]]
+    identifier = 'resume'
+    name = 'Resume'
+    url = 'https://rosacksoftwaresolutions.com/markdown-resume/mrosack-resume.pdf'
+    weight = 4
